@@ -1,10 +1,10 @@
 ---
 layout: post
-title: "Reimagining a 1953 Atlas in QGIS"
+title: "Mapping Snowcover from Satellite"
 author: "Joseph Millington"
 categories: maps
 tags: [sample]
-image: vintage_atlas_preview.png
+image: snowcover_full.png
 ---
 
 This project came about in response to a simple question: *'is it possible to emulate the style of Herbert Bayer's 1953 World Geo-Graphic Atlas in QGIS?'*
@@ -13,4 +13,4 @@ While the project is still in progress, namely the extensive labelling that the 
 
 More information on Herbert Bayer's atlas can be found on [Atlaseum](https://www.atlaseum.com/atlases/world-geo-graphic-atlas). Robin Hawkes' [hachure tutorial](https://robinhawkes.com/blog/qgis-monochrome-hachures/) was also instrumental.
 
-![alt text](./assets/img/vintage_atlas_full.png "Vintage Atlas Image")
+![alt text](./assets/img/snowcover_full.png "Snowcover Image")
