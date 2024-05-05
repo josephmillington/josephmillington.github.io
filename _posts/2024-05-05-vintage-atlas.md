@@ -5,10 +5,6 @@ author: "Joseph Millington"
 categories: maps
 tags: [sample]
 image: vintage_atlas.png
-# Customise post layout
-hide_post_share:     "true"
-hide_related_posts:  "true"
-hide_post_date:      "true"
 ---
 
 This project came about in response to a simple question: 'is it possible to emulate the style of Herbert Bayer's 1953 World Geo-Graphic Atlas in QGIS?'
