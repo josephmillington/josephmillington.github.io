@@ -17,10 +17,10 @@ layout: default
   <article>
     {{ content }}
   </article>
-  {% if site.hide_post_share = true %} <!-- reversed logic to hide by default -->
+  {% if site.data.settings.post.hide_post_share != true %}
     {% include post-share.html %}
   {% endif %}
-  {% if site.hide_related_posts = true %} <!-- reversed logic to hide by default -->
+  {% if site.data.settings.post.hide_related_posts != true %}
     {% include related-posts.html %}
   {% endif %}
   {% if site.data.settings.disqus.comments %}
