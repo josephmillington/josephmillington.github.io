@@ -17,3 +17,8 @@ author:              "Joseph Millington"
 # RSS 2.0 can be used instead of Atom by uncommenting following two lines
 #feed:
 #  path: rss-feed.xml
+
+# Customise post layout
+hide_post_share:     "true"
+hide_related_posts:  "true"
+hide_post_date:      "true"
