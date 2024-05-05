@@ -11,4 +11,4 @@ This project came about in response to a simple question: 'is it possible to emu
 
 While the project is still in progress, namely the extensive labelling that the style demands, it is presented here as a demonstration of work in QGIS.
 
-More information on Herbert Bayer's atlas can be found on [Atlaseum](https://www.atlaseum.com/atlases/world-geo-graphic-atlas).0
+More information on Herbert Bayer's atlas can be found on [Atlaseum](https://www.atlaseum.com/atlases/world-geo-graphic-atlas).
