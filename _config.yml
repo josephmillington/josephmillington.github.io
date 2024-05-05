@@ -19,6 +19,7 @@ author:              "Joseph Millington"
 #  path: rss-feed.xml
 
 # Customise post layout
-hide_post_share:     "true"
-hide_related_posts:  "true"
-hide_post_date:      "true"
+site:
+  hide_post_share:     "true"
+  hide_related_posts:  "true"
+  hide_post_date:      "true"
