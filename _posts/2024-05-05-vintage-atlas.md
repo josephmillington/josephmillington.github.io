@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Reimagining a 1953 Atlas in QGIS"
+title: "Reimagining a 1953 Atlas in QGIS [work-in-progress]"
 author: "Joseph Millington"
 categories: maps
 tags: [sample]

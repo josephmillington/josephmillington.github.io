@@ -7,10 +7,15 @@ tags: [sample]
 image: japan_preview.png
 ---
 
-This project came about in response to a simple question: *'is it possible to emulate the style of Herbert Bayer's 1953 World Geo-Graphic Atlas in QGIS?'*
+This project sought to create an atlas-style map of Japan in a poster format, with cities, major waterbodies, and islands labelled.
 
-While the project is still in progress, namely the extensive labelling that the style demands, it is presented here as a demonstration of work in QGIS. The working version of the map is presented below. It has been constructed using a range of OpenStreetMap, Natural Earth, and European Commission GIS data. Remaining tasks required to complete the map include, simplifying and smoothing roads and coastlines, labelling rivers, and adding the remaining elements to the map frame. 
+The project was used as a test to experiment with vector hillshading. The hillshading in the final project uses aspect and slope calculated from SRTM elevation data to shade HydroATLAS river basins, with layer blending being used to 'bake' this shading into the underlying terrain tinting.
 
-More information on Herbert Bayer's atlas can be found on [Atlaseum](https://www.atlaseum.com/atlases/world-geo-graphic-atlas). Robin Hawkes' [hachure tutorial](https://robinhawkes.com/blog/qgis-monochrome-hachures/) was also instrumental.
+City labels were created from OpenStreetMap data, with waterbody labels added using existing maps of Japan as reference. A soft shadow was also applied beneath Japan's constituent islands to increase visual clarity and help them stand out against other landmasses shown within the map. 
+
+QGIS' geometry generator is used to wrap labels to the curved graticules. Natural Earth bathymetry data is used as a high-level illustration of the sea floor terrain.
+
+[comment]: <> (need to replace full map with one with scale and attribution)
+[comment]: <> (need to add links here)
 
 ![alt text](./assets/img/japan_full.png "Japan Image")

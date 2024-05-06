@@ -7,10 +7,8 @@ tags: [sample]
 image: walesparks_preview.png
 ---
 
-This project came about in response to a simple question: *'is it possible to emulate the style of Herbert Bayer's 1953 World Geo-Graphic Atlas in QGIS?'*
+This is a simple map highlighting the location of Wales' three National Parks. The project was an attempt to create a *'linework'* map applying a single-colour background throughout the map and without the use of filled polygons.
 
-While the project is still in progress, namely the extensive labelling that the style demands, it is presented here as a demonstration of work in QGIS. The working version of the map is presented below. It has been constructed using a range of OpenStreetMap, Natural Earth, and European Commission GIS data. Remaining tasks required to complete the map include, simplifying and smoothing roads and coastlines, labelling rivers, and adding the remaining elements to the map frame. 
-
-More information on Herbert Bayer's atlas can be found on [Atlaseum](https://www.atlaseum.com/atlases/world-geo-graphic-atlas). Robin Hawkes' [hachure tutorial](https://robinhawkes.com/blog/qgis-monochrome-hachures/) was also instrumental.
+Elevation is represented by contours only, with each contour line being translated northwards according to the elevation represented by the contour line. This creates the impression of 3D terrain within the map. Elevation tinting is then applied to create greater distinction between areas of high and low elevation. Locations of select towns and cities are included to provide additional geographic context. 
 
 ![alt text](./assets/img/walesparks_full.png "Wales' National Parks Image")
