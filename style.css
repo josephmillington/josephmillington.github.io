@@ -33,6 +33,44 @@ body {
     justify-content: center;
     align-items: center;
   }
+
+  /* Center the chart and match the width of the map frame */
+  #chart-container {
+    width: 800px; /* Match the map frame width */
+    margin: 0 auto; /* Center the chart */
+    text-align: center; /* Ensure content is centered */
+  }
+
+  /* Ensure the SVG element fills the container */
+  #line-chart {
+    width: 100%; /* Make the chart fill the container */
+    height: 400px; /* Set a fixed height */
+  }
+
+  /* Ensure consistent font size for the chart */
+  #chart-container text {
+    font-size: 14px; /* Match the font size of the rest of the site */
+    font-family: Arial, sans-serif; /* Use the same font as the site */
+  }
+
+  /* Center the rate of change chart and match the width of the map frame */
+  #rate-of-change-chart-container {
+    width: 800px; /* Match the map frame width */
+    margin: 0 auto; /* Center the chart */
+    text-align: center; /* Ensure content is centered */
+  }
+
+  /* Ensure the SVG element fills the container */
+  #rate-of-change-chart {
+    width: 100%; /* Make the chart fill the container */
+    height: 400px; /* Set a fixed height */
+  }
+
+  /* Ensure consistent font size for the chart */
+  #rate-of-change-chart-container text {
+    font-size: 14px; /* Match the font size of the rest of the site */
+    font-family: Arial, sans-serif; /* Use the same font as the site */
+  }
   
   #yearSlider {
     margin: 0 1em;

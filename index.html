@@ -34,7 +34,24 @@
 
   <!-- Display for the change since 1850 -->
   <div id="change-since-1850">
-    <strong>Change Since 1850:</strong> <span id="changeValue">0</span> km²
+    <strong>Total Change Since 1850:</strong> <span id="changeValue">0</span> km²
+  </div>
+
+  <!-- Display for the area change per year -->
+  <div id="change-per-year">
+    <strong>Annual Rate of Change Since Previous Survey:</strong> 
+    <span id="changePerYearValue">0</span> km² 
+    (<span id="changePerYearPercent">0</span>%)
+  </div>
+
+  <!-- Line chart for glacier area over time -->
+  <div id="chart-container">
+    <svg id="line-chart" height="400"></svg>
+  </div>
+
+  <!-- Line chart for rate of change over time -->
+  <div id="rate-of-change-chart-container">
+    <svg id="rate-of-change-chart" height="400"></svg>
   </div>
 
   <!-- Link to our script -->
