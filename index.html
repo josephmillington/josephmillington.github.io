@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aletsch Glacier Retreat Visualization</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- Include d3.js from a CDN -->
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <!-- Include Leaflet.js from a CDN -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Include Turf from a CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@turf/turf/turf.min.js"></script>
+</head>
+<body>
+  <header>
+    <h1>Aletsch Glacier Retreat</h1>
+  </header>
+  
+  <!-- Container for the map -->
+  <div id="map-container" style="width: 800px; height: 600px;"></div>
+
+  <!-- Slider control for selecting the year -->
+  <div id="controls">
+    <input type="range" id="yearSlider" min="0" max="4" step="1" value="0">
+    <span id="yearLabel">1850</span>
+  </div>
+  
+  <!-- Display for the total area -->
+  <div id="total-area">
+    <strong>Total Glacier Area:</strong> <span id="areaValue">0</span> km²
+  </div>
+
+  <!-- Display for the change since 1850 -->
+  <div id="change-since-1850">
+    <strong>Change Since 1850:</strong> <span id="changeValue">0</span> km²
+  </div>
+
+  <!-- Link to our script -->
+  <script src="script.js"></script>
+</body>
+</html>

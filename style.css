@@ -1,0 +1,41 @@
+/* Basic styling for our dashboard */
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    margin: 0;
+    padding: 0;
+  }
+  
+  header {
+    background: #f8f8f8;
+    padding: 1em 0;
+    border-bottom: 1px solid #ddd;
+  }
+  
+  #map-container {
+    margin: 2em auto;
+    width: 80%;
+    max-width: 800px;
+    border: 1px solid #ccc;
+  }
+  
+  svg {
+    width: 100%;
+    height: auto;
+    fill:aqua;
+  }
+  
+  #controls {
+    margin: 1em auto;
+    width: 80%;
+    max-width: 800px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  #yearSlider {
+    margin: 0 1em;
+    width: 300px;
+  }
+  
