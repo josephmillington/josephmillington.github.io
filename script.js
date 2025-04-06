@@ -19,34 +19,37 @@ const map = L.map('map-container', {
   zoomControl: false // Disable zoom controls
 }).setView([46.8, 8.2], 8); // Centered on Switzerland
 
-// Add the Stadia.AlidadeSmooth basemap
-const stadiaAlidadeSmooth = L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png', {
-    attribution: '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a>, &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a>, &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+// Add the OpenStreetMap_HOT basemap
+var OpenStreetMap_HOT = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Tiles style by <a href="https://www.hotosm.org/" target="_blank">Humanitarian OpenStreetMap Team</a> hosted by <a href="https://openstreetmap.fr/" target="_blank">OpenStreetMap France</a>'
   }).addTo(map); // Set as the default basemap
-
-// Add an OpenStreetMap basemap
-const osmBasemap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-});
-
-// Add a second basemap (optional, e.g., a satellite basemap)
-const satelliteBasemap = L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
-  attribution: '&copy; Google Maps',
-  subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
-});
-
-const baseMaps = {
-    'Stadia Alidade Smooth': stadiaAlidadeSmooth,
+  
+  // Add an OpenStreetMap basemap
+  const osmBasemap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+  });
+  
+  // Add a satellite basemap (optional)
+  const satelliteBasemap = L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+    attribution: '&copy; Google Maps',
+    subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
+  });
+  
+  // Define the basemaps
+  const baseMaps = {
+    "OpenStreetMap HOT": OpenStreetMap_HOT,
     "OpenStreetMap": osmBasemap,
     "Satellite": satelliteBasemap
   };
-
-// Create a custom Leaflet layer for the glacier extent
-const glacierLayer = L.layerGroup().addTo(map);
+  
+  // Create a custom Leaflet layer for the glacier extent
+  const glacierLayer = L.layerGroup().addTo(map);
   
   const overlayMaps = {
     "Glacier Extent": glacierLayer
   };
+  
 
 // Create an SVG layer on top of the Leaflet map
 const svgLayer = d3.select(map.getPanes().overlayPane).append("svg");
@@ -75,6 +78,31 @@ const basinDataPath = 'data/basin.geojson';
 // Prepare an array to store glacier areas for each year
 const glacierAreas = [];
 
+function populateGlacierAreas(callback) {
+    // Clear the glacierAreas array
+    glacierAreas.length = 0;
+  
+    // Load GeoJSON data for each year and calculate the glacier area
+    const promises = years.map(year => {
+      return d3.json(glacierData[year]).then(data => {
+        const totalArea = data.features.reduce((sum, feature) => {
+          return sum + turf.area(feature); // Calculate area in square meters
+        }, 0);
+  
+        // Store the year and area (converted to square kilometers)
+        glacierAreas.push({ year, area: totalArea / 1e6 });
+      });
+    });
+  
+    // Wait for all data to be loaded and processed
+    Promise.all(promises).then(() => {
+      // Sort glacierAreas by year (just in case)
+      glacierAreas.sort((a, b) => a.year - b.year);
+  
+      // Call the callback function if provided
+      if (callback) callback();
+    });
+  }
 
 // Funtion to update the change per year display
 function updateChangePerYearDisplay(currentYearIndex) {
@@ -103,167 +131,6 @@ function updateChangePerYearDisplay(currentYearIndex) {
       d3.select("#changePerYearValue").text("0");
       d3.select("#changePerYearPercent").text("0");
     }
-  }
-
-// Function to calculate glacier areas for all years and create the line chart
-function createLineChart() {
-    // Calculate glacier areas for all years
-    return Promise.all(years.map(year => d3.json(glacierData[year]).then(data => {
-      const totalArea = data.features.reduce((sum, feature) => {
-        return sum + turf.area(feature); // Turf.js calculates area in square meters
-      }, 0);
-      return { year, area: totalArea / 1e6 }; // Convert to square kilometers
-    }))).then(results => {
-      glacierAreas.push(...results);
-  
-      // Create the line chart
-      const svg = d3.select("#line-chart");
-      const margin = { top: 20, right: 30, bottom: 50, left: 50 };
-      const width = 800 - margin.left - margin.right; // Match the map frame width
-      const height = 400 - margin.top - margin.bottom;
-  
-      const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
-  
-      // Set up scales
-      const x = d3.scaleLinear()
-        .domain(d3.extent(glacierAreas, d => d.year))
-        .range([0, width]);
-  
-      const y = d3.scaleLinear()
-        .domain([0, d3.max(glacierAreas, d => d.area)])
-        .range([height, 0]);
-  
-      // Add X-axis
-      g.append("g")
-        .attr("transform", `translate(0,${height})`)
-        .call(d3.axisBottom(x).tickFormat(d3.format("d")))
-        .append("text")
-        .attr("fill", "#000")
-        .attr("x", width / 2)
-        .attr("y", 40)
-        .attr("text-anchor", "middle")
-        .text("Year")
-        .style("font-size", "14px"); // Match font size
-  
-      // Add Y-axis
-      g.append("g")
-        .call(d3.axisLeft(y))
-        .append("text")
-        .attr("fill", "#000")
-        .attr("transform", "rotate(-90)")
-        .attr("x", -height / 2)
-        .attr("y", -40)
-        .attr("text-anchor", "middle")
-        .text("Glacier Area (km²)")
-        .style("font-size", "14px"); // Match font size
-  
-      // Add the line
-      const line = d3.line()
-        .x(d => x(d.year))
-        .y(d => y(d.area));
-  
-      g.append("path")
-        .datum(glacierAreas)
-        .attr("fill", "none")
-        .attr("stroke", "steelblue")
-        .attr("stroke-width", 1.5)
-        .attr("d", line);
-  
-      // Apply consistent font size to axis ticks
-      g.selectAll(".tick text")
-        .style("font-size", "14px") // Match font size
-        .style("font-family", "Arial, sans-serif"); // Match font family
-    });
-  }
-
-// Function to create the rate of change chart
-function createRateOfChangeStepChart() {
-    // Ensure glacierAreas has data before proceeding
-    if (glacierAreas.length < 2) {
-      console.error("Insufficient data in glacierAreas to calculate rate of change.");
-      return;
-    }
-  
-    // Calculate the rate of change for each period
-    const rateOfChange = glacierAreas.slice(0, -1).map((current, index) => {
-      const next = glacierAreas[index + 1]; // Get the next year
-      const yearDifference = next.year - current.year;
-      const areaDifference = next.area - current.area;
-      const rate = areaDifference / yearDifference; // Rate of change (km² per year)
-      return { startYear: current.year, endYear: next.year, rate };
-    });
-  
-    // Debugging: Log the rateOfChange array
-    console.log("Rate of Change Array:", rateOfChange);
-  
-    // Create the step chart
-    const svg = d3.select("#rate-of-change-chart");
-    const margin = { top: 20, right: 30, bottom: 50, left: 50 };
-    const width = 800 - margin.left - margin.right;
-    const height = 400 - margin.top - margin.bottom;
-  
-    const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
-  
-    // Set up scales
-    const x = d3.scaleLinear()
-      .domain([d3.min(rateOfChange, d => d.startYear), d3.max(rateOfChange, d => d.endYear)])
-      .range([0, width]);
-  
-    const y = d3.scaleLinear()
-      .domain([d3.min(rateOfChange, d => d.rate), d3.max(rateOfChange, d => d.rate)])
-      .range([0, height]); // Invert the range to flip the Y-axis
-  
-    // Add X-axis
-    g.append("g")
-      .attr("transform", `translate(0,${height})`)
-      .call(d3.axisBottom(x).tickFormat(d3.format("d")))
-      .append("text")
-      .attr("fill", "#000")
-      .attr("x", width / 2)
-      .attr("y", 40)
-      .attr("text-anchor", "middle")
-      .text("Year")
-      .style("font-size", "14px");
-  
-    // Add Y-axis
-    g.append("g")
-      .call(d3.axisLeft(y))
-      .append("text")
-      .attr("fill", "#000")
-      .attr("transform", "rotate(-90)")
-      .attr("x", -height / 2)
-      .attr("y", -40)
-      .attr("text-anchor", "middle")
-      .text("Rate of Change (km²/year)")
-      .style("font-size", "14px");
-  
-    // Add the step lines
-    rateOfChange.forEach((d, index) => {
-      g.append("line")
-        .attr("x1", x(d.startYear))
-        .attr("x2", x(d.endYear))
-        .attr("y1", y(d.rate))
-        .attr("y2", y(d.rate))
-        .attr("stroke", "steelblue")
-        .attr("stroke-width", 2);
-  
-      // Add vertical lines to connect steps
-      if (index < rateOfChange.length - 1) {
-        g.append("line")
-          .attr("x1", x(d.endYear))
-          .attr("x2", x(d.endYear))
-          .attr("y1", y(d.rate))
-          .attr("y2", y(rateOfChange[index + 1].rate))
-          .attr("stroke", "steelblue")
-          .attr("stroke-width", 1)
-          .attr("stroke-dasharray", "4,4"); // Dashed line for transitions
-      }
-    });
-  
-    // Apply consistent font size to axis ticks
-    g.selectAll(".tick text")
-      .style("font-size", "14px")
-      .style("font-family", "Arial, sans-serif");
   }
 
 // Function to load and render GeoJSON data
@@ -490,7 +357,7 @@ function updateRetreatRateChart(currentYearIndex) {
       .attr("y", (d, i) => i * (barHeight + barSpacing) + barHeight / 2 + 5)
       .attr("fill", "#000")
       .style("font-size", "12px")
-      .text(d => `${d.rate} km²/year`);
+      .text(d => `${d.rate} km² per year`);
   
     // Add year labels to the left of the bars
     svg.selectAll(".year-label")
@@ -505,7 +372,17 @@ function updateRetreatRateChart(currentYearIndex) {
       .text(d => d.year);
   }
 
-
+  
+populateGlacierAreas(() => {
+    // Initially render the first year (1850)
+    renderGlacier(1850);
+  
+    // Update the stacked bar chart
+    updateStackedBar(currentYearIndex);
+  
+    // Update the retreat rate chart
+    updateRetreatRateChart(currentYearIndex);
+  });
 
 // Update visualization when the slider value changes
 d3.select("#yearSlider").on("input", function () {
@@ -533,9 +410,6 @@ d3.select("#yearSlider").on("input", function () {
     }
 });
 
-
-
-
 // Update the SVG layer position and size on map events
 map.on("moveend", updateMap);
 map.on("zoomend", updateMap);
@@ -559,10 +433,3 @@ function updateMap() {
 
 L.control.layers(baseMaps, overlayMaps).addTo(map);
 
-// Initially render the first year (1850)
-renderGlacier(1850);
-
-// Call the function to create the line chart, then create the rate of change chart
-createLineChart().then(() => {
-    createRateOfChangeStepChart();
-  });
