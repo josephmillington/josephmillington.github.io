@@ -17,6 +17,7 @@ body {
     width: 80%;
     max-width: 800px;
     border: 1px solid #ccc;
+    background-color: white;
   }
   
   svg {
@@ -60,6 +61,28 @@ body {
     text-align: center; /* Ensure content is centered */
   }
 
+  #stacked-bar-container {
+    width: 400px; /* Set a fixed width for the stacked bar */
+    margin: 2em auto; /* Center the container horizontally and add vertical spacing */
+    text-align: center; /* Center the content inside the container */
+  }
+  
+  #stacked-bar {
+    display: block; /* Ensure the SVG behaves like a block element */
+    margin: 0 auto; /* Center the SVG horizontally */
+  }
+
+  #retreat-rate-chart-container {
+    width: 400px; /* Set a fixed width for the retreat rate chart */
+    margin: 2em auto; /* Center the container horizontally and add vertical spacing */
+    text-align: center; /* Center the content inside the container */
+  }
+  
+  #retreat-rate-chart {
+    display: block; /* Ensure the SVG behaves like a block element */
+    margin: 0 auto; /* Center the SVG horizontally */
+  }
+
   /* Ensure the SVG element fills the container */
   #rate-of-change-chart {
     width: 100%; /* Make the chart fill the container */
@@ -77,3 +100,33 @@ body {
     width: 300px;
   }
   
+  #references {
+    width: 800px; /* Match the width of the main content */
+    margin: 2em auto; /* Center the section and add vertical spacing */
+    text-align: left; /* Align text to the left */
+    font-size: 14px; /* Match the font size of the rest of the site */
+    font-family: Arial, sans-serif; /* Use the same font as the site */
+  }
+  
+  #references h2 {
+    font-size: 18px; /* Slightly larger font for the heading */
+    margin-bottom: 0.5em; /* Add spacing below the heading */
+  }
+  
+  #references ul {
+    padding-left: 1.5em; /* Add padding for the list */
+    list-style-type: none;
+  }
+  
+  #references ul li {
+    margin-bottom: 0.5em; /* Add spacing between list items */
+  }
+  
+  #references a {
+    color: #007BFF; /* Use a blue color for links */
+    text-decoration: none; /* Remove underline from links */
+  }
+  
+  #references a:hover {
+    text-decoration: underline; /* Add underline on hover */
+  }

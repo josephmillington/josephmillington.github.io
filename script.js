@@ -19,16 +19,34 @@ const map = L.map('map-container', {
   zoomControl: false // Disable zoom controls
 }).setView([46.8, 8.2], 8); // Centered on Switzerland
 
+// Add the Stadia.AlidadeSmooth basemap
+const stadiaAlidadeSmooth = L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a>, &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a>, &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+  }).addTo(map); // Set as the default basemap
+
 // Add an OpenStreetMap basemap
 const osmBasemap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-}).addTo(map);
+});
 
 // Add a second basemap (optional, e.g., a satellite basemap)
 const satelliteBasemap = L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
   attribution: '&copy; Google Maps',
   subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
 });
+
+const baseMaps = {
+    'Stadia Alidade Smooth': stadiaAlidadeSmooth,
+    "OpenStreetMap": osmBasemap,
+    "Satellite": satelliteBasemap
+  };
+
+// Create a custom Leaflet layer for the glacier extent
+const glacierLayer = L.layerGroup().addTo(map);
+  
+  const overlayMaps = {
+    "Glacier Extent": glacierLayer
+  };
 
 // Create an SVG layer on top of the Leaflet map
 const svgLayer = d3.select(map.getPanes().overlayPane).append("svg");
@@ -50,9 +68,6 @@ let area1850 = null;
 
 // Default to the first year in the dataset
 let currentYearIndex = 0
-
-// Create a custom Leaflet layer for the glacier extent
-const glacierLayer = L.layerGroup().addTo(map);
 
 // Path to the basin GeoJSON file
 const basinDataPath = 'data/basin.geojson';
@@ -277,24 +292,60 @@ function renderGlacier(year) {
       // Clear the existing glacier paths from the custom layer
       glacierLayer.clearLayers();
   
-      // Bind the GeoJSON data to path elements
-      const glacierPath = g.selectAll("path").data(data.features);
+      // Render previous years' glacier extents
+      const currentYearIndex = years.indexOf(year);
+      if (currentYearIndex > 0) {
+        for (let i = 0; i < currentYearIndex; i++) {
+          const previousYear = years[i];
+          d3.json(glacierData[previousYear]).then(prevData => {
+            const previousPaths = g.selectAll(`.glacier-${previousYear}`).data(prevData.features);
+  
+            // Enter new paths for previous years
+            previousPaths.enter()
+              .append("path")
+              .attr("class", `glacier-${previousYear}`)
+              .attr("d", path)
+              .attr("fill", "#ffa196") // Color for previous years
+              .attr("stroke-width", "0"); // Remove stroke for previous years
+  
+            // Update existing paths
+            previousPaths
+              .attr("d", path)
+              .attr("fill", "#ffa196")
+              .attr("stroke-width", "0"); // Remove stroke for previous years
+  
+            // Remove old paths
+            previousPaths.exit().remove();
+          });
+        }
+      }
+  
+      // Remove features for years greater than the current year
+      years.slice(currentYearIndex + 1).forEach(futureYear => {
+        g.selectAll(`.glacier-${futureYear}`).remove();
+      });
+  
+      // Render the current year's glacier extent
+      const currentPaths = g.selectAll(`.glacier-${year}`).data(data.features);
+  
+      // Enter new paths for the current year
+      currentPaths.enter()
+        .append("path")
+        .attr("class", `glacier-${year}`)
+        .attr("d", path)
+        .attr("fill", "#C8E9E9") // Color for the current year
+        .attr("stroke", "#333") // Ensure stroke for the current year
+        .attr("stroke-width", "0.5"); // Set stroke width for the current year
   
       // Update existing paths
-      glacierPath
+      currentPaths
         .attr("d", path)
-        .attr("fill", "steelblue")
-        .attr("stroke", "#333");
-  
-      // Enter new paths if none exist
-      glacierPath.enter()
-        .append("path")
-        .attr("d", path)
-        .attr("fill", "steelblue")
-        .attr("stroke", "#333");
+        .attr("fill", "#C8E9E9")
+        .attr("stroke", "#333") // Ensure stroke for the current year
+        .attr("stroke-width", "0.5"); // Set stroke width for the current year
   
       // Remove old paths
-      glacierPath.exit().remove();
+      currentPaths.exit().remove();
   
       // Add the SVG layer to the custom Leaflet layer
       const svgOverlay = L.svgOverlay(svgLayer.node(), map.getBounds());
@@ -318,7 +369,6 @@ function renderGlacier(year) {
       d3.select("#changeValue").text(changeSince1850);
   
       // Calculate the change per year in the time period
-      const currentYearIndex = years.indexOf(year);
       if (currentYearIndex > 0) {
         const previousYear = years[currentYearIndex - 1];
         const yearDifference = year - previousYear;
@@ -345,8 +395,115 @@ function renderGlacier(year) {
     });
   }
 
+// Function to create the stacked bar chart
+function updateStackedBar(currentYearIndex) {
+    const svg = d3.select("#stacked-bar");
+    const width = +svg.attr("width");
+    const height = +svg.attr("height");
+  
+    // Clear any existing bars
+    svg.selectAll("*").remove();
+  
+    // Get the glacier area for the current year and 1850
+    const currentArea = glacierAreas[currentYearIndex].area;
+    const remainingProportion = currentArea / area1850;
+    const lostProportion = 1 - remainingProportion;
+  
+    // Define the bar segments
+    const segments = [
+        { proportion: lostProportion, color: "#ffa196" }, // Lost glacier area
+        { proportion: remainingProportion, color: "#C8E9E9" } // Remaining glacier area
+    ];
+  
+    // Create the stacked bar
+    let xOffset = 0;
+    svg.selectAll("rect")
+      .data(segments)
+      .enter()
+      .append("rect")
+      .attr("x", d => {
+        const x = xOffset;
+        xOffset += d.proportion * width;
+        return x;
+      })
+      .attr("y", 0)
+      .attr("width", d => d.proportion * width)
+      .attr("height", height)
+      .attr("fill", d => d.color);
+  
+    // Add a title to the stacked bar
+    svg.append("text")
+      .attr("x", width / 2)
+      .attr("y", height / 2 + 5)
+      .attr("text-anchor", "middle")
+      .attr("fill", "#000")
+      .style("font-size", "14px")
+      .text("Glacier Retreat Since 1850");
+  }
 
-
+function updateRetreatRateChart(currentYearIndex) {
+    const svg = d3.select("#retreat-rate-chart");
+    const width = +svg.attr("width");
+    const height = +svg.attr("height");
+  
+    // Clear any existing bars
+    svg.selectAll("*").remove();
+  
+    // Calculate the retreat rates for each time period, starting from the second year
+    const retreatRates = glacierAreas.slice(1).map((current, index) => {
+      const previous = glacierAreas[index]; // Compare with the previous year
+      const yearDifference = current.year - previous.year;
+      const areaDifference = previous.area - current.area;
+      const rate = (areaDifference / yearDifference).toFixed(2); // Retreat rate (km²/year)
+      return { year: current.year, rate };
+    });
+  
+    // Define the bar height and spacing
+    const barHeight = 20;
+    const barSpacing = 10;
+  
+    // Define the maximum retreat rate for scaling
+    const maxRate = d3.max(retreatRates, d => +d.rate);
+  
+    // Create a scale for the bar widths
+    const xScale = d3.scaleLinear()
+      .domain([0, maxRate])
+      .range([0, width - 100]); // Leave space for labels
+  
+    // Create the bars
+    svg.selectAll("rect")
+      .data(retreatRates)
+      .enter()
+      .append("rect")
+      .attr("x", 0)
+      .attr("y", (d, i) => i * (barHeight + barSpacing))
+      .attr("width", d => xScale(+d.rate))
+      .attr("height", barHeight)
+      .attr("fill", (d, i) => i + 1 === currentYearIndex ? "#ffa196" : "#C8E9E9"); // Highlight the selected year
+  
+    // Add labels for the retreat rates
+    svg.selectAll("text")
+      .data(retreatRates)
+      .enter()
+      .append("text")
+      .attr("x", d => xScale(+d.rate) + 5) // Position the label to the right of the bar
+      .attr("y", (d, i) => i * (barHeight + barSpacing) + barHeight / 2 + 5)
+      .attr("fill", "#000")
+      .style("font-size", "12px")
+      .text(d => `${d.rate} km²/year`);
+  
+    // Add year labels to the left of the bars
+    svg.selectAll(".year-label")
+      .data(retreatRates)
+      .enter()
+      .append("text")
+      .attr("x", -5) // Position the label to the left of the bar
+      .attr("y", (d, i) => i * (barHeight + barSpacing) + barHeight / 2 + 5)
+      .attr("text-anchor", "end")
+      .attr("fill", "#000")
+      .style("font-size", "12px")
+      .text(d => d.year);
+  }
 
 
 
@@ -354,21 +511,29 @@ function renderGlacier(year) {
 d3.select("#yearSlider").on("input", function () {
     currentYearIndex = +this.value; // Update the global variable
     const selectedYear = years[currentYearIndex];
-  
+
     // Update the label to show the selected year
     d3.select("#yearLabel").text(selectedYear);
-  
+
     // Render the glacier extent for the selected year
     renderGlacier(selectedYear);
-  
+
     // Update the change per year display
     updateChangePerYearDisplay(currentYearIndex);
-  
+
+    // Update the stacked bar chart
+    updateStackedBar(currentYearIndex);
+
+    // Update the retreat rate chart
+    updateRetreatRateChart(currentYearIndex);
+
     // Lock the map to the 1850 bounds
     if (lockedBounds) {
-      map.fitBounds(lockedBounds);
+        map.fitBounds(lockedBounds);
     }
-  });
+});
+
+
 
 
 // Update the SVG layer position and size on map events
@@ -391,14 +556,6 @@ function updateMap() {
 }
 
 // Add a layer toggle control
-const baseMaps = {
-  "OpenStreetMap": osmBasemap,
-  "Satellite": satelliteBasemap
-};
-
-const overlayMaps = {
-  "Glacier Extent": glacierLayer
-};
 
 L.control.layers(baseMaps, overlayMaps).addTo(map);
 
