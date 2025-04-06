@@ -2,66 +2,54 @@
 const years = [1850, 1931, 1973, 2010, 2016];
 // Mapping each year to its corresponding GeoJSON file path
 const glacierData = {
-  1850: 'data/1850.geojson',
-  1931: 'data/1931.geojson',
-  1973: 'data/1973.geojson',
-  2010: 'data/2010.geojson',
-  2016: 'data/2016.geojson'
+    1850: 'data/1850.geojson',
+    1931: 'data/1931.geojson',
+    1973: 'data/1973.geojson',
+    2010: 'data/2010.geojson',
+    2016: 'data/2016.geojson'
 };
 
-// Initialize the Leaflet map
-const map = L.map('map-container', {
-  dragging: false, // Disable dragging
-  scrollWheelZoom: false, // Disable zooming with the scroll wheel
-  doubleClickZoom: false, // Disable double-click zoom
-  boxZoom: false, // Disable box zoom
-  keyboard: false, // Disable keyboard navigation
-  zoomControl: false // Disable zoom controls
-}).setView([46.8, 8.2], 8); // Centered on Switzerland
+// Define the dimensions of the SVG container
+const width = 800;
+const height = 600;
 
-// Add the OpenStreetMap_HOT basemap
-var OpenStreetMap_HOT = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Tiles style by <a href="https://www.hotosm.org/" target="_blank">Humanitarian OpenStreetMap Team</a> hosted by <a href="https://openstreetmap.fr/" target="_blank">OpenStreetMap France</a>'
-  }).addTo(map); // Set as the default basemap
-  
-  // Add an OpenStreetMap basemap
-  const osmBasemap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+// Create an SVG container
+const svg = d3.select("#map-container")
+  .append("svg")
+  .attr("width", width)
+  .attr("height", height);
+
+// Define a geographic projection (e.g., Mercator)
+const projection = d3.geoMercator()
+  .center([8.2, 46.8]) // Centered on Switzerland
+  .scale(5000) // Adjust scale for zoom level
+  .translate([width / 2, height / 2]);
+
+// Define a path generator using the projection
+const path = d3.geoPath().projection(projection);
+
+// Create a group for the map layers
+const g = svg.append("g");
+
+
+// Handle line weight with zoom level
+let currentZoomLevel = 1; // Default zoom level
+
+const zoom = d3.zoom()
+  .scaleExtent([1, 8]) // Set zoom limits
+  .on("zoom", (event) => {
+    currentZoomLevel = event.transform.k; // Store the current zoom level
+    g.attr("transform", event.transform); // Apply zoom and pan transformations
+
+    // Dynamically adjust the stroke width of all paths
+    g.selectAll("path").attr("stroke-width", 1 / currentZoomLevel);
+
+    // Log the current zoom level to the console
+    console.log(`Current zoom level: ${currentZoomLevel}`);
   });
-  
-  // Add a satellite basemap (optional)
-  const satelliteBasemap = L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
-    attribution: '&copy; Google Maps',
-    subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
-  });
-  
-  // Define the basemaps
-  const baseMaps = {
-    "OpenStreetMap HOT": OpenStreetMap_HOT,
-    "OpenStreetMap": osmBasemap,
-    "Satellite": satelliteBasemap
-  };
-  
-  // Create a custom Leaflet layer for the glacier extent
-  const glacierLayer = L.layerGroup().addTo(map);
-  
-  const overlayMaps = {
-    "Glacier Extent": glacierLayer
-  };
-  
 
-// Create an SVG layer on top of the Leaflet map
-const svgLayer = d3.select(map.getPanes().overlayPane).append("svg");
-const g = svgLayer.append("g").attr("class", "leaflet-zoom-hide");
-
-// Define a geographic path generator using Leaflet's projection
-const path = d3.geoPath().projection(d3.geoTransform({
-  point: function (x, y) {
-    const point = map.latLngToLayerPoint(new L.LatLng(y, x));
-    this.stream.point(point.x, point.y);
-  }
-}));
+// Attach the zoom behavior to the SVG
+svg.call(zoom);
 
 // Variable to store the 1850 bounds
 let lockedBounds;
@@ -69,40 +57,49 @@ let lockedBounds;
 // Variable to store the 1850 glacier area
 let area1850 = null;
 
+let selectedGlacierId = null; // Default to no selection
+
 // Default to the first year in the dataset
 let currentYearIndex = 0
-
-// Path to the basin GeoJSON file
-const basinDataPath = 'data/basin.geojson';
 
 // Prepare an array to store glacier areas for each year
 const glacierAreas = [];
 
 function populateGlacierAreas(callback) {
-    // Clear the glacierAreas array
-    glacierAreas.length = 0;
-  
-    // Load GeoJSON data for each year and calculate the glacier area
-    const promises = years.map(year => {
-      return d3.json(glacierData[year]).then(data => {
-        const totalArea = data.features.reduce((sum, feature) => {
-          return sum + turf.area(feature); // Calculate area in square meters
-        }, 0);
-  
-        // Store the year and area (converted to square kilometers)
-        glacierAreas.push({ year, area: totalArea / 1e6 });
-      });
+  console.log("populateGlacierAreas function called"); // Debugging log
+
+  // Clear the glacierAreas array
+  glacierAreas.length = 0;
+
+  // Load GeoJSON data for each year and calculate the glacier area
+  const promises = years.map(year => {
+    console.log(`Loading GeoJSON for year: ${year}`); // Debugging log
+    return d3.json(glacierData[year]).then(data => {
+      console.log(`GeoJSON loaded for year: ${year}`, data); // Debugging log
+
+      // Use Turf.js to calculate the total area in square meters
+      const totalArea = data.features.reduce((sum, feature) => {
+        return sum + turf.area(feature); // Turf.js calculates area in square meters
+      }, 0);
+
+      // Store the year and area (converted to square kilometers)
+      glacierAreas.push({ year, area: totalArea / 1e6 }); // Convert from m² to km²
+    }).catch(error => {
+      console.error(`Error loading GeoJSON for year: ${year}`, error); // Debugging log
     });
-  
-    // Wait for all data to be loaded and processed
-    Promise.all(promises).then(() => {
-      // Sort glacierAreas by year (just in case)
-      glacierAreas.sort((a, b) => a.year - b.year);
-  
-      // Call the callback function if provided
-      if (callback) callback();
-    });
-  }
+  });
+
+  // Wait for all data to be loaded and processed
+  Promise.all(promises).then(() => {
+    console.log("All GeoJSON data loaded and processed"); // Debugging log
+    console.log("Glacier areas:", glacierAreas); // Debugging log
+    glacierAreas.sort((a, b) => a.year - b.year);
+
+    if (callback) callback();
+  }).catch(error => {
+    console.error("Error in Promise.all:", error); // Debugging log
+  });
+}
 
 // Funtion to update the change per year display
 function updateChangePerYearDisplay(currentYearIndex) {
@@ -133,180 +130,197 @@ function updateChangePerYearDisplay(currentYearIndex) {
     }
   }
 
-// Function to load and render GeoJSON data
-function renderGlacier(year) {
-    d3.json(glacierData[year]).then(data => {
-      console.log(`Loaded GeoJSON for year ${year}:`, data);
+// Helper to compute total area in km² from a GeoJSON data object
+function computeAreaKm2(data) {
+  const totalArea = data.features.reduce((sum, feature) => sum + turf.area(feature), 0);
+  return totalArea / 1e6;
+}
+
+// Helper to update D3 paths for a given selection, class, and style
+function updatePaths(selection, data, className, fill, stroke, strokeWidth) {
+  const paths = selection.data(data);
   
-      // If the year is 1850, calculate and lock the bounds
-      if (year === 1850 && !lockedBounds) {
+  // Enter + Update: use the merge pattern (works in D3 v5+)
+  paths.enter()
+    .append("path")
+    .attr("class", className)
+    .merge(paths)
+    .attr("d", path)
+    .attr("fill", fill)
+    .attr("stroke", stroke)
+    .attr("stroke-width", strokeWidth);
+  
+  // Exit: remove outdated elements
+  paths.exit().remove();
+}
+
+
+async function renderGlacier(year) {
+  try {
+    // Load current year GeoJSON
+    const data = await d3.json(glacierData[year]);
+    console.log(`Loaded GeoJSON for year ${year}:`, data);
+
+    // For year 1850, calculate and lock bounds and area if not done yet
+    if (year === 1850) {
+      if (!lockedBounds) {
         const bounds = d3.geoBounds(data);
         lockedBounds = [
-          [bounds[0][1], bounds[0][0]], // Southwest corner
-          [bounds[1][1], bounds[1][0]]  // Northeast corner
+          [bounds[0][1], bounds[0][0]], // SW corner
+          [bounds[1][1], bounds[1][0]]  // NE corner
         ];
-        map.fitBounds(lockedBounds); // Fit the map to the 1850 bounds
       }
-  
-      // If the year is 1850, calculate and store the total area
-      if (year === 1850 && area1850 === null) {
-        const totalArea1850 = data.features.reduce((sum, feature) => {
-          return sum + turf.area(feature); // Turf.js calculates area in square meters
-        }, 0);
-        area1850 = totalArea1850 / 1e6; // Convert to square kilometers
+      if (area1850 === null) {
+        area1850 = computeAreaKm2(data);
       }
-  
-      // Clear the existing glacier paths from the custom layer
-      glacierLayer.clearLayers();
-  
-      // Render previous years' glacier extents
-      const currentYearIndex = years.indexOf(year);
-      if (currentYearIndex > 0) {
-        for (let i = 0; i < currentYearIndex; i++) {
-          const previousYear = years[i];
-          d3.json(glacierData[previousYear]).then(prevData => {
-            const previousPaths = g.selectAll(`.glacier-${previousYear}`).data(prevData.features);
-  
-            // Enter new paths for previous years
-            previousPaths.enter()
-              .append("path")
-              .attr("class", `glacier-${previousYear}`)
-              .attr("d", path)
-              .attr("fill", "#ffa196") // Color for previous years
-              .attr("stroke-width", "0"); // Remove stroke for previous years
-  
-            // Update existing paths
-            previousPaths
-              .attr("d", path)
-              .attr("fill", "#ffa196")
-              .attr("stroke-width", "0"); // Remove stroke for previous years
-  
-            // Remove old paths
-            previousPaths.exit().remove();
-          });
-        }
-      }
-  
-      // Remove features for years greater than the current year
-      years.slice(currentYearIndex + 1).forEach(futureYear => {
-        g.selectAll(`.glacier-${futureYear}`).remove();
-      });
-  
-      // Render the current year's glacier extent
-      const currentPaths = g.selectAll(`.glacier-${year}`).data(data.features);
-  
-      // Enter new paths for the current year
-      currentPaths.enter()
-        .append("path")
-        .attr("class", `glacier-${year}`)
-        .attr("d", path)
-        .attr("fill", "#C8E9E9") // Color for the current year
-        .attr("stroke", "#333") // Ensure stroke for the current year
-        .attr("stroke-width", "0.5"); // Set stroke width for the current year
-  
-      // Update existing paths
-      currentPaths
-        .attr("d", path)
-        .attr("fill", "#C8E9E9")
-        .attr("stroke", "#333") // Ensure stroke for the current year
-        .attr("stroke-width", "0.5"); // Set stroke width for the current year
-  
-      // Remove old paths
-      currentPaths.exit().remove();
-  
-      // Add the SVG layer to the custom Leaflet layer
-      const svgOverlay = L.svgOverlay(svgLayer.node(), map.getBounds());
-      glacierLayer.addLayer(svgOverlay);
-  
-      // Calculate the total area of the glacier polygons for the current year
-      const totalArea = data.features.reduce((sum, feature) => {
-        return sum + turf.area(feature); // Turf.js calculates area in square meters
-      }, 0);
-  
-      // Convert the area to square kilometers
-      const totalAreaKm2 = (totalArea / 1e6).toFixed(2);
-  
-      // Update the total area display
-      d3.select("#areaValue").text(totalAreaKm2);
-  
-      // Calculate the change since 1850
-      const changeSince1850 = area1850 !== null ? (totalAreaKm2 - area1850).toFixed(2) : "0.00";
-  
-      // Update the change since 1850 display
-      d3.select("#changeValue").text(changeSince1850);
-  
-      // Calculate the change per year in the time period
-      if (currentYearIndex > 0) {
-        const previousYear = years[currentYearIndex - 1];
-        const yearDifference = year - previousYear;
-  
-        d3.json(glacierData[previousYear]).then(prevData => {
-          const prevTotalArea = prevData.features.reduce((sum, feature) => {
-            return sum + turf.area(feature); // Turf.js calculates area in square meters
-          }, 0);
-          const prevTotalAreaKm2 = prevTotalArea / 1e6; // Convert to square kilometers
-  
-          // Calculate absolute and relative change per year
-          const absoluteChangePerYear = ((totalAreaKm2 - prevTotalAreaKm2) / yearDifference).toFixed(2);
-          const relativeChangePerYear = ((absoluteChangePerYear / prevTotalAreaKm2) * 100).toFixed(2);
-  
-          // Update the change per year display
-          d3.select("#changePerYearValue").text(absoluteChangePerYear);
-          d3.select("#changePerYearPercent").text(relativeChangePerYear);
-        });
-      } else {
-        // If there is no previous year, reset the values
-        d3.select("#changePerYearValue").text("0");
-        d3.select("#changePerYearPercent").text("0");
-      }
-    });
+    }
+
+    // Clear existing glacier paths
+    g.selectAll("path").remove();
+
+    // Render current year's glacier extent
+    const glaciers = g.selectAll("path")
+      .data(data.features, d => d.properties['sgi-id']); // Use 'sgi-id' as the key
+
+    // Enter: Add new paths
+    glaciers.enter()
+      .append("path")
+      .attr("d", path)
+      .attr("fill", d => {
+        const glacierId = d.properties['sgi-id'].split('-')[0]; // Extract the main ID
+        return glacierId === selectedGlacierId ? "#ffa196" : "#C8E9E9"; // Highlight selected glacier
+      })
+      .attr("stroke", "#333")
+      .attr("stroke-width", 1 / currentZoomLevel) // Adjust stroke width based on current zoom level
+      .on("click", (event, d) => {
+        const clickedId = d.properties['sgi-id'].split('-')[0]; // Extract the main ID
+        console.log(`Clicked glacier with ID: ${clickedId}`);
+    
+        // Update the selectedGlacierId and dropdown value
+        selectedGlacierId = clickedId;
+        d3.select("#idSelector").property("value", clickedId); // Update the dropdown selection
+    
+        // Re-render the map to apply the highlight
+        const selectedYear = years[currentYearIndex];
+        renderGlacier(selectedYear);
+    
+        // Optionally zoom to the clicked glacier
+        zoomToGlaciers(clickedId);
+      })
+      .merge(glaciers) // Update: Update existing paths
+      .attr("d", path)
+      .attr("fill", d => {
+        const glacierId = d.properties['sgi-id'].split('-')[0]; // Extract the main ID
+        return glacierId === selectedGlacierId ? "#ffa196" : "#C8E9E9"; // Highlight selected glacier
+      })
+      .attr("stroke-width", 1 / currentZoomLevel); // Adjust stroke width for updated paths
+
+
+
+    // Exit: Remove old paths
+    glaciers.exit().remove();
+
+    // Update area calculations and display for the current year
+    const currentAreaKm2 = computeAreaKm2(data).toFixed(2);
+    d3.select("#areaValue").text(currentAreaKm2);
+
+    // Calculate change since 1850 (if available)
+    const changeSince1850 = area1850 !== null
+      ? (currentAreaKm2 - area1850).toFixed(2)
+      : "0.00";
+    d3.select("#changeValue").text(changeSince1850);
+
+    // Calculate change per year compared to the previous year
+    const currentYearIndex = years.indexOf(year);
+    if (currentYearIndex > 0) {
+      const previousYear = years[currentYearIndex - 1];
+      const prevData = await d3.json(glacierData[previousYear]);
+      const prevAreaKm2 = computeAreaKm2(prevData);
+      const yearDifference = year - previousYear;
+      const absoluteChangePerYear = ((currentAreaKm2 - prevAreaKm2) / yearDifference).toFixed(2);
+      const relativeChangePerYear = ((absoluteChangePerYear / prevAreaKm2) * 100).toFixed(2);
+
+      d3.select("#changePerYearValue").text(absoluteChangePerYear);
+      d3.select("#changePerYearPercent").text(relativeChangePerYear);
+    } else {
+      d3.select("#changePerYearValue").text("0");
+      d3.select("#changePerYearPercent").text("0");
+    }
+  } catch (error) {
+    console.error("Error rendering glacier data:", error);
   }
+}
+
+
+function zoomToGlaciers(mainId) {
+  // Filter features with the same main ID
+  const matchingFeatures = g.selectAll("path")
+    .filter(d => d.properties['sgi-id'].split('-')[0] === mainId);
+
+  if (!matchingFeatures.empty()) {
+    // Calculate the bounding box of the matching features
+    const [[x0, y0], [x1, y1]] = d3.geoPath(projection).bounds({
+      type: "FeatureCollection",
+      features: matchingFeatures.data()
+    });
+
+    // Calculate the scale and translate for zooming
+    const scale = Math.min(8, 0.9 / Math.max((x1 - x0) / width, (y1 - y0) / height));
+    const translate = [(width - scale * (x0 + x1)) / 2, (height - scale * (y0 + y1)) / 2];
+
+    // Apply the zoom transformation
+    svg.transition().duration(750).call(
+      zoom.transform,
+      d3.zoomIdentity.translate(translate[0], translate[1]).scale(scale)
+    );
+  } else {
+    console.warn(`No glaciers found with ID: ${mainId}`);
+  }
+}
+
 
 // Function to create the stacked bar chart
 function updateStackedBar(currentYearIndex) {
-    const svg = d3.select("#stacked-bar");
-    const width = +svg.attr("width");
-    const height = +svg.attr("height");
-  
-    // Clear any existing bars
-    svg.selectAll("*").remove();
-  
-    // Get the glacier area for the current year and 1850
-    const currentArea = glacierAreas[currentYearIndex].area;
-    const remainingProportion = currentArea / area1850;
-    const lostProportion = 1 - remainingProportion;
-  
-    // Define the bar segments
-    const segments = [
-        { proportion: lostProportion, color: "#ffa196" }, // Lost glacier area
-        { proportion: remainingProportion, color: "#C8E9E9" } // Remaining glacier area
-    ];
-  
-    // Create the stacked bar
-    let xOffset = 0;
-    svg.selectAll("rect")
-      .data(segments)
-      .enter()
-      .append("rect")
-      .attr("x", d => {
-        const x = xOffset;
-        xOffset += d.proportion * width;
-        return x;
-      })
-      .attr("y", 0)
-      .attr("width", d => d.proportion * width)
-      .attr("height", height)
-      .attr("fill", d => d.color);
-  
-    // Add a title to the stacked bar
-    svg.append("text")
-      .attr("x", width / 2)
-      .attr("y", height / 2 + 5)
-      .attr("text-anchor", "middle")
-      .attr("fill", "#000")
-      .style("font-size", "14px")
-      .text("Glacier Retreat Since 1850");
+  const svg = d3.select("#stacked-bar");
+  const width = +svg.attr("width");
+  const height = +svg.attr("height");
+
+  // Clear any existing bars
+  svg.selectAll("*").remove();
+
+  // Get the glacier area for the current year and 1850
+  const currentArea = glacierAreas[currentYearIndex]?.area || 0;
+  const remainingProportion = area1850 ? currentArea / area1850 : 0;
+  const lostProportion = 1 - remainingProportion;
+
+  // Ensure proportions are valid numbers
+  if (isNaN(remainingProportion) || isNaN(lostProportion)) {
+    console.error("Invalid proportions for stacked bar chart");
+    return;
   }
+
+  // Define the bar segments
+  const segments = [
+    { proportion: lostProportion, color: "#ffa196" }, // Lost glacier area
+    { proportion: remainingProportion, color: "#C8E9E9" } // Remaining glacier area
+  ];
+
+  // Create the stacked bar
+  let xOffset = 0;
+  svg.selectAll("rect")
+    .data(segments)
+    .enter()
+    .append("rect")
+    .attr("x", d => {
+      const x = xOffset;
+      xOffset += d.proportion * width;
+      return x;
+    })
+    .attr("y", 0)
+    .attr("width", d => d.proportion * width)
+    .attr("height", height)
+    .attr("fill", d => d.color);
+}
 
 function updateRetreatRateChart(currentYearIndex) {
     const svg = d3.select("#retreat-rate-chart");
@@ -372,64 +386,82 @@ function updateRetreatRateChart(currentYearIndex) {
       .text(d => d.year);
   }
 
+function populateIdSelector() {
+    const idSet = new Set(); // Use a Set to store unique IDs
+  
+    // Iterate through all GeoJSON files
+    const promises = years.map(year => {
+      return d3.json(glacierData[year]).then(data => {
+        data.features.forEach(feature => {
+          const sgiId = feature.properties['sgi-id']; // Get the 'sgi-id' field
+          if (sgiId) {
+            // Extract the main ID (before the '-')
+            const mainId = sgiId.split('-')[0];
+            idSet.add(mainId); // Add the main ID to the Set
+          }
+        });
+      });
+    });
+  
+    // Once all data is loaded, populate the dropdown
+    Promise.all(promises).then(() => {
+      const idSelector = d3.select("#idSelector");
+  
+      // Add an option for each unique ID
+      Array.from(idSet).sort().forEach(id => {
+        idSelector.append("option")
+          .attr("value", id)
+          .text(id);
+      });
+  
+      console.log("Dropdown populated with IDs:", Array.from(idSet));
+    });
+}
+
+populateIdSelector();
   
 populateGlacierAreas(() => {
-    // Initially render the first year (1850)
-    renderGlacier(1850);
-  
-    // Update the stacked bar chart
-    updateStackedBar(currentYearIndex);
-  
-    // Update the retreat rate chart
-    updateRetreatRateChart(currentYearIndex);
-  });
+  // Initially render the first year (1850)
+  renderGlacier(1850);
+
+  // Update the stacked bar chart
+  updateStackedBar(currentYearIndex);
+
+  // Update the retreat rate chart
+  updateRetreatRateChart(currentYearIndex);
+});
+
+d3.select("#idSelector").on("change", function () {
+  selectedGlacierId = this.value; // Update the selected glacier ID
+  console.log(`Selected glacier ID: ${selectedGlacierId}`);
+
+  // Re-render the map for the current year to apply the highlight
+  const selectedYear = years[currentYearIndex];
+  renderGlacier(selectedYear);
+
+  // Zoom to the selected glacier
+  if (selectedGlacierId) {
+    zoomToGlaciers(selectedGlacierId);
+  }
+});
 
 // Update visualization when the slider value changes
 d3.select("#yearSlider").on("input", function () {
-    currentYearIndex = +this.value; // Update the global variable
-    const selectedYear = years[currentYearIndex];
+  currentYearIndex = +this.value; // Update the global variable
+  const selectedYear = years[currentYearIndex];
 
-    // Update the label to show the selected year
-    d3.select("#yearLabel").text(selectedYear);
+  // Update the label to show the selected year
+  d3.select("#yearLabel").text(selectedYear);
 
-    // Render the glacier extent for the selected year
-    renderGlacier(selectedYear);
+  // Render the glacier extent for the selected year
+  renderGlacier(selectedYear);
 
-    // Update the change per year display
-    updateChangePerYearDisplay(currentYearIndex);
+  // Update the stacked bar chart
+  updateStackedBar(currentYearIndex);
 
-    // Update the stacked bar chart
-    updateStackedBar(currentYearIndex);
-
-    // Update the retreat rate chart
-    updateRetreatRateChart(currentYearIndex);
-
-    // Lock the map to the 1850 bounds
-    if (lockedBounds) {
-        map.fitBounds(lockedBounds);
-    }
+  // Update the retreat rate chart
+  updateRetreatRateChart(currentYearIndex);
 });
 
-// Update the SVG layer position and size on map events
-map.on("moveend", updateMap);
-map.on("zoomend", updateMap);
-
-function updateMap() {
-  const bounds = map.getBounds();
-  const topLeft = map.latLngToLayerPoint(bounds.getNorthWest());
-  const bottomRight = map.latLngToLayerPoint(bounds.getSouthEast());
-
-  svgLayer
-    .attr("width", bottomRight.x - topLeft.x)
-    .attr("height", bottomRight.y - topLeft.y)
-    .style("left", `${topLeft.x}px`)
-    .style("top", `${topLeft.y}px`);
-
-  g.attr("transform", `translate(${-topLeft.x},${-topLeft.y})`);
-  g.selectAll("path").attr("d", path); // Recalculate paths
-}
-
-// Add a layer toggle control
-
-L.control.layers(baseMaps, overlayMaps).addTo(map);
-
+// Populate the dropdown with unique IDs
+populateIdSelector();

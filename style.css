@@ -1,106 +1,139 @@
-/* Basic styling for our dashboard */
+
+
+@font-face {
+  font-family: 'Roboto';
+  src: url('font/Roboto-Regular.ttf') format('truetype');
+  font-weight: 400; /* Regular weight */
+  font-style: normal; /* Normal style */
+}
+
+@font-face {
+  font-family: 'Roboto';
+  src: url('font/Roboto-Bold.ttf') format('truetype');
+  font-weight: 700; /* Bold weight */
+  font-style: normal; /* Normal style */
+}
+
+/* Basic styling */
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Roboto', Arial, sans-serif; /* Use Roboto as the primary font */
     text-align: center;
     margin: 0;
     padding: 0;
   }
+
+#id-selector-container {
+    margin: 1em auto;
+    text-align: center;
+}
   
-  header {
+#idSelector {
+    padding: 0.5em;
+    font-size: 14px;
+}
+
+header {
     background: #f8f8f8;
     padding: 1em 0;
     border-bottom: 1px solid #ddd;
-  }
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Roboto', Arial, sans-serif; /* Apply Roboto to headings */
+    font-weight: 700; /* Use the bold weight for headings */
+}
+
+#stacked-bar-container, #retreat-rate-chart-container, #controls, #references {
+    font-family: 'Roboto', Arial, sans-serif; /* Apply Roboto to specific sections */
+}
   
-  #map-container {
+#map-container {
     margin: 2em auto;
     width: 80%;
     max-width: 800px;
     border: 1px solid #ccc;
     background-color: white;
-  }
+}
   
-  svg {
+svg {
     width: 100%;
     height: auto;
     fill:aqua;
-  }
+}
   
-  #controls {
+#controls {
     margin: 1em auto;
     width: 80%;
     max-width: 800px;
     display: flex;
     justify-content: center;
     align-items: center;
-  }
+}
 
-  #stacked-bar-container {
+#stacked-bar-container {
     width: 400px; /* Set a fixed width for the stacked bar */
     margin: 2em auto; /* Center the container horizontally and add vertical spacing */
     text-align: center; /* Center the content inside the container */
-  }
+}
   
-  #stacked-bar {
+#stacked-bar {
     display: block; /* Ensure the SVG behaves like a block element */
     margin: 0 auto; /* Center the SVG horizontally */
-  }
+}
 
-  #retreat-rate-chart-container {
+#retreat-rate-chart-container {
     width: 400px; /* Set a fixed width for the retreat rate chart */
     margin: 2em auto; /* Center the container horizontally and add vertical spacing */
     text-align: center; /* Center the content inside the container */
-  }
+}
   
-  #retreat-rate-chart {
+#retreat-rate-chart {
     display: block; /* Ensure the SVG behaves like a block element */
     margin: 0 auto; /* Center the SVG horizontally */
-  }
+}
 
-  /* Ensure the SVG element fills the container */
-  #rate-of-change-chart {
+/* Ensure the SVG element fills the container */
+#rate-of-change-chart {
     width: 100%; /* Make the chart fill the container */
     height: 400px; /* Set a fixed height */
   }
 
-  /* Ensure consistent font size for the chart */
-  #rate-of-change-chart-container text {
+/* Ensure consistent font size for the chart */
+#rate-of-change-chart-container text {
     font-size: 14px; /* Match the font size of the rest of the site */
-    font-family: Arial, sans-serif; /* Use the same font as the site */
-  }
+}
   
-  #yearSlider {
+#yearSlider {
     margin: 0 1em;
     width: 300px;
-  }
+}
   
-  #references {
+#references {
     width: 800px; /* Match the width of the main content */
     margin: 2em auto; /* Center the section and add vertical spacing */
     text-align: left; /* Align text to the left */
     font-size: 14px; /* Match the font size of the rest of the site */
-    font-family: Arial, sans-serif; /* Use the same font as the site */
-  }
+}
   
-  #references h2 {
+#references h2 {
     font-size: 18px; /* Slightly larger font for the heading */
     margin-bottom: 0.5em; /* Add spacing below the heading */
-  }
+}
   
-  #references ul {
+#references ul {
     padding-left: 1.5em; /* Add padding for the list */
     list-style-type: none;
-  }
+}
   
-  #references ul li {
+#references ul li {
     margin-bottom: 0.5em; /* Add spacing between list items */
-  }
+}
   
-  #references a {
+#references a {
     color: #007BFF; /* Use a blue color for links */
     text-decoration: none; /* Remove underline from links */
-  }
+}
   
-  #references a:hover {
+#references a:hover {
     text-decoration: underline; /* Add underline on hover */
-  }
+}
