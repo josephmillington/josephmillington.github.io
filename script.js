@@ -38,6 +38,7 @@
 
 
 // TODO: handle positive retreat rates (i.e., growth)
+// TODO: test adding d3 SVG code into slider update block
 
 // To run Local Server on Windows:
 
