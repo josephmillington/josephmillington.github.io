@@ -1,311 +1,309 @@
-// Array of years corresponding to our GeoJSON files
+/**
+ * Module: script.js
+ *
+ * This script provides functionality for visualizing glacier data over time using MapLibre GL JS and D3.js.
+ * It includes features for rendering glacier data, updating visualizations, and interacting with the map.
+ *
+ * Features:
+ * - Displays glacier data for multiple years using vector tiles and GeoJSON.
+ * - Allows users to interact with the map via a year slider and glacier ID selector.
+ * - Dynamically updates visualizations, including a stacked bar chart and retreat rate chart.
+ * - Supports zooming and panning, with dynamic adjustments to line weights based on zoom level.
+ * - Calculates and displays glacier area changes over time using Turf.js.
+ *
+ * Requirements:
+ * - MapLibre GL JS for map rendering.
+ * - D3.js for data-driven visualizations.
+ * - Turf.js for geographic calculations (e.g., area).
+ * - Vector tiles and GeoJSON files for glacier data.
+ *
+ * Usage:
+ * 1. Place this script in a directory with the required data files (e.g., GeoJSON and vector tiles).
+ * 2. Ensure the HTML file includes the necessary containers (e.g., `#map-container`, `#stacked-bar`).
+ * 3. Run a local server to serve the files (e.g., `node server.js`).
+ * 4. Open the application in a browser to interact with the map and visualizations.
+ *
+ * Key Functions:
+ * - `populateGlacierAreas(callback)`: Loads glacier data and calculates areas for each year.
+ * - `renderGlacier(year, g)`: Renders glacier data for a specific year.
+ * - `updatePaths(selection, data, className, fill, stroke, strokeWidth)`: Updates SVG paths dynamically.
+ * - `updateStackedBar(currentYearIndex)`: Updates the stacked bar chart for glacier area proportions.
+ * - `updateRetreatRateChart(currentYearIndex)`: Updates the retreat rate chart for annual glacier retreat rates.
+ * - `zoomToGlaciers(mainId)`: Zooms the map to a specific glacier based on its ID.
+ *
+ * Notes:
+ * - The script assumes the availability of GeoJSON files and vector tiles for the specified years.
+ * - Ensure the `glacierData` and `years` arrays are updated to match the available data.
+ */
+
+
+// TODO: handle positive retreat rates (i.e., growth)
+
+// To run Local Server on Windows:
+// cd C:\Users\joemi\Documents\GitHub\josephmillington.github.io
+// node server.js
+
+
+let selectedStateId = null; // Track the currently selected glacier
+
+// Define the base URL for the tiles and the default year
+// const baseUrl = `${window.location.origin}`;
+const defaultYear = 1850;
+
+// Array of years corresponding to the GeoJSON data
 const years = [1850, 1931, 1973, 2010, 2016];
+
 // Mapping each year to its corresponding GeoJSON file path
 const glacierData = {
-    1850: 'data/1850.geojson',
-    1931: 'data/1931.geojson',
-    1973: 'data/1973.geojson',
-    2010: 'data/2010.geojson',
-    2016: 'data/2016.geojson'
+  1850: 'data/1850.geojson',
+  1931: 'data/1931.geojson',
+  1973: 'data/1973.geojson',
+  2010: 'data/2010.geojson',
+  2016: 'data/2016.geojson'
 };
 
-// Define the dimensions of the SVG container
-const width = 800;
-const height = 600;
+const basemapData = {
+  'ne_10m_admin_0_countries': 'data/ne_10m_admin_0_countries.geojson',
+  'ne_10m_admin_1_state_provinces': 'data/ne_10m_admin_1_state_provinces.geojson',
+};
 
-// Create an SVG container
-const svg = d3.select("#map-container")
-  .append("svg")
-  .attr("width", width)
-  .attr("height", height);
+// Initialize the MapLibre map
+const map = new maplibregl.Map({
+  container: 'map-container',
+  style: {
+    version: 8,
+    glyphs: 'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf', // Add glyphs URL
+    sources: {
+      glaciers: {
+        type: 'geojson',
+        data: glacierData[defaultYear] // Load the default year's data
+      },
+      countries: {
+        type: 'geojson',
+        data: basemapData['ne_10m_admin_0_countries'] // Country boundaries data
+      },
+      provinces: {
+        type: 'geojson',
+        data: basemapData['ne_10m_admin_1_state_provinces'] // State/province boundaries data
+      }
+    },
+    layers: [
+      {
+        id: 'countries-layer',
+        type: 'line', // Use line type for boundaries
+        source: 'countries',
+        paint: {
+          'line-color': '#666', // Grey for country boundaries
+          'line-width': 1
+        }
+      },
 
-// Define a geographic projection (e.g., Mercator)
-const projection = d3.geoMercator()
-  .center([8.2, 46.8]) // Centered on Switzerland
-  .scale(5000) // Adjust scale for zoom level
-  .translate([width / 2, height / 2]);
+      {
+        id: 'provinces-layer',
+        type: 'line', // Use line type for boundaries
+        source: 'provinces',
+        paint: {
+          'line-color': '#aaa', // Lighter grey for state/province boundaries
+          'line-width': 0.5
+        }
+      },
+      {
+        id: 'provinces-labels', // Add province/state labels
+        type: 'symbol',
+        source: 'provinces',
+        layout: {
+          'text-field': ['get', 'name'], // Use the 'name' property from your GeoJSON
+          'text-font': ['Open Sans Regular', 'Arial Unicode MS Regular'],
+          'text-size': 10, // Font size for province labels
+          'text-anchor': 'center'
+        },
+        paint: {
+          'text-color': '#555',
+          'text-halo-color': '#FBFBF8',
+          'text-halo-width': 2
+        }
+      },
+      {
+        id: 'glaciers-layer',
+        type: 'fill',
+        source: 'glaciers',
+        paint: {
+          'fill-color': [
+            'case',
+            ['boolean', ['feature-state', 'selected'], false],
+            '#0056b3', // Darker blue for selected glaciers
+            '#C8E9E9'  // Default glacier color
+          ],
+          'fill-outline-color': '#333'
+        }
+      }
+    ]
+  },
+  center: [8.6, 46.5], // Adjust to your map's center
+  zoom: 7
+});
 
-// Define a path generator using the projection
-const path = d3.geoPath().projection(projection);
-
-// Create a group for the map layers
-const g = svg.append("g");
 
 
-// Handle line weight with zoom level
-let currentZoomLevel = 1; // Default zoom level
+// CALCULATE AREAS //
 
-const zoom = d3.zoom()
-  .scaleExtent([1, 8]) // Set zoom limits
-  .on("zoom", (event) => {
-    currentZoomLevel = event.transform.k; // Store the current zoom level
-    g.attr("transform", event.transform); // Apply zoom and pan transformations
+// Helper to compute total area in km² from a GeoJSON data object
+function computeAreaKm2(data) {
+  const totalArea = data.features.reduce((sum, feature) => sum + turf.area(feature), 0)
+  return (totalArea / 1e6).toFixed(2);
+}
 
-    // Dynamically adjust the stroke width of all paths
-    g.selectAll("path").attr("stroke-width", 1 / currentZoomLevel);
+// Function to update the HTML element with the computed area
+function displayTotalGlacierArea(geojsonData) {
+  // Compute the total glacier area in km²
+  const totalAreaKm2 = computeAreaKm2(geojsonData);
+  // Update the element with id 'areaValue' with the computed area
+  document.getElementById('areaValue').innerText = totalAreaKm2;
+}
 
-    // Log the current zoom level to the console
-    console.log(`Current zoom level: ${currentZoomLevel}`);
-  });
 
-// Attach the zoom behavior to the SVG
-svg.call(zoom);
 
-// Variable to store the 1850 bounds
-let lockedBounds;
 
-// Variable to store the 1850 glacier area
-let area1850 = null;
 
-let selectedGlacierId = null; // Default to no selection
 
-// Default to the first year in the dataset
-let currentYearIndex = 0
+
+
+
+
 
 // Prepare an array to store glacier areas for each year
 const glacierAreas = [];
 
 function populateGlacierAreas(callback) {
-  console.log("populateGlacierAreas function called"); // Debugging log
+  console.log("populateGlacierAreas function called");
 
   // Clear the glacierAreas array
   glacierAreas.length = 0;
 
-  // Load GeoJSON data for each year and calculate the glacier area
+  // Load GeoJSON data for each year and calculate the glacier area per glacier id
   const promises = years.map(year => {
-    console.log(`Loading GeoJSON for year: ${year}`); // Debugging log
+    console.log(`Loading GeoJSON for year: ${year}`);
     return d3.json(glacierData[year]).then(data => {
-      console.log(`GeoJSON loaded for year: ${year}`, data); // Debugging log
+      console.log(`GeoJSON loaded for year: ${year}`, data);
 
-      // Use Turf.js to calculate the total area in square meters
-      const totalArea = data.features.reduce((sum, feature) => {
-        return sum + turf.area(feature); // Turf.js calculates area in square meters
-      }, 0);
+      // Create an object to store areas aggregated by glacier id
+      const areasByGlacier = {};
 
-      // Store the year and area (converted to square kilometers)
-      glacierAreas.push({ year, area: totalArea / 1e6 }); // Convert from m² to km²
+      // Iterate over each feature in the GeoJSON data
+      data.features.forEach(feature => {
+        // Extract the glacier id from the feature properties
+        const glacierId = feature.properties['glacier-id'];
+        // Calculate area in square meters using Turf.js
+        const featureArea = turf.area(feature); 
+        
+        // Accumulate the area (in m²) per glacier id
+        if (areasByGlacier[glacierId]) {
+          areasByGlacier[glacierId] += featureArea;
+        } else {
+          areasByGlacier[glacierId] = featureArea;
+        }
+      });
+
+      // Convert the areas from m² to km² for each glacier
+      for (const id in areasByGlacier) {
+        areasByGlacier[id] = areasByGlacier[id] / 1e6;
+      }
+
+      // Store the year along with the aggregated areas by glacier id
+      glacierAreas.push({ year, areas: areasByGlacier });
     }).catch(error => {
-      console.error(`Error loading GeoJSON for year: ${year}`, error); // Debugging log
+      console.error(`Error loading GeoJSON for year: ${year}`, error);
     });
   });
 
-  // Wait for all data to be loaded and processed
+  // Once all data is loaded and processed
   Promise.all(promises).then(() => {
-    console.log("All GeoJSON data loaded and processed"); // Debugging log
-    console.log("Glacier areas:", glacierAreas); // Debugging log
+    console.log("All GeoJSON data loaded and processed");
+    console.log("Glacier areas:", glacierAreas);
+    
+    // Sort the results by year if needed
     glacierAreas.sort((a, b) => a.year - b.year);
+
+    // Add a total area property to each entry in glacierAreas
+    glacierAreas.forEach(entry => {
+      entry.totalArea = Object.values(entry.areas).reduce((sum, area) => sum + area, 0);
+    });
 
     if (callback) callback();
   }).catch(error => {
-    console.error("Error in Promise.all:", error); // Debugging log
+    console.error("Error in Promise.all:", error);
   });
 }
 
-// Funtion to update the change per year display
-function updateChangePerYearDisplay(currentYearIndex) {
-    if (currentYearIndex > 0) {
-      const currentYear = years[currentYearIndex];
-      const previousYear = years[currentYearIndex - 1];
-      const yearDifference = currentYear - previousYear;
-  
-      // Calculate the rate of change
-      const currentArea = glacierAreas[currentYearIndex].area;
-      const previousArea = glacierAreas[currentYearIndex - 1].area;
-      const areaDifference = currentArea - previousArea;
-      const rateOfChange = (areaDifference / yearDifference).toFixed(2); // km² per year
-      const percentChange = ((areaDifference / previousArea) * 100).toFixed(2); // Percentage
-  
-      // Update the text content dynamically
-      d3.select("#change-per-year strong")
-        .text(`Annual Rate of Change (${previousYear} to ${currentYear}):`);
-      d3.select("#changePerYearValue").text(rateOfChange);
-      d3.select("#changePerYearPercent").text(percentChange);
-    } else {
-      // Handle the first year (no previous year)
-      const firstYear = years[currentYearIndex];
-      d3.select("#change-per-year strong")
-        .text(`Annual Rate of Change (${firstYear}):`);
-      d3.select("#changePerYearValue").text("0");
-      d3.select("#changePerYearPercent").text("0");
-    }
-  }
-
-// Helper to compute total area in km² from a GeoJSON data object
-function computeAreaKm2(data) {
-  const totalArea = data.features.reduce((sum, feature) => sum + turf.area(feature), 0);
-  return totalArea / 1e6;
-}
-
-// Helper to update D3 paths for a given selection, class, and style
-function updatePaths(selection, data, className, fill, stroke, strokeWidth) {
-  const paths = selection.data(data);
-  
-  // Enter + Update: use the merge pattern (works in D3 v5+)
-  paths.enter()
-    .append("path")
-    .attr("class", className)
-    .merge(paths)
-    .attr("d", path)
-    .attr("fill", fill)
-    .attr("stroke", stroke)
-    .attr("stroke-width", strokeWidth);
-  
-  // Exit: remove outdated elements
-  paths.exit().remove();
-}
-
-
-async function renderGlacier(year) {
-  try {
-    // Load current year GeoJSON
-    const data = await d3.json(glacierData[year]);
-    console.log(`Loaded GeoJSON for year ${year}:`, data);
-
-    // For year 1850, calculate and lock bounds and area if not done yet
-    if (year === 1850) {
-      if (!lockedBounds) {
-        const bounds = d3.geoBounds(data);
-        lockedBounds = [
-          [bounds[0][1], bounds[0][0]], // SW corner
-          [bounds[1][1], bounds[1][0]]  // NE corner
-        ];
-      }
-      if (area1850 === null) {
-        area1850 = computeAreaKm2(data);
-      }
-    }
-
-    // Clear existing glacier paths
-    g.selectAll("path").remove();
-
-    // Render current year's glacier extent
-    const glaciers = g.selectAll("path")
-      .data(data.features, d => d.properties['sgi-id']); // Use 'sgi-id' as the key
-
-    // Enter: Add new paths
-    glaciers.enter()
-      .append("path")
-      .attr("d", path)
-      .attr("fill", d => {
-        const glacierId = d.properties['sgi-id'].split('-')[0]; // Extract the main ID
-        return glacierId === selectedGlacierId ? "#ffa196" : "#C8E9E9"; // Highlight selected glacier
-      })
-      .attr("stroke", "#333")
-      .attr("stroke-width", 1 / currentZoomLevel) // Adjust stroke width based on current zoom level
-      .on("click", (event, d) => {
-        const clickedId = d.properties['sgi-id'].split('-')[0]; // Extract the main ID
-        console.log(`Clicked glacier with ID: ${clickedId}`);
-    
-        // Update the selectedGlacierId and dropdown value
-        selectedGlacierId = clickedId;
-        d3.select("#idSelector").property("value", clickedId); // Update the dropdown selection
-    
-        // Re-render the map to apply the highlight
-        const selectedYear = years[currentYearIndex];
-        renderGlacier(selectedYear);
-    
-        // Optionally zoom to the clicked glacier
-        zoomToGlaciers(clickedId);
-      })
-      .merge(glaciers) // Update: Update existing paths
-      .attr("d", path)
-      .attr("fill", d => {
-        const glacierId = d.properties['sgi-id'].split('-')[0]; // Extract the main ID
-        return glacierId === selectedGlacierId ? "#ffa196" : "#C8E9E9"; // Highlight selected glacier
-      })
-      .attr("stroke-width", 1 / currentZoomLevel); // Adjust stroke width for updated paths
 
 
 
-    // Exit: Remove old paths
-    glaciers.exit().remove();
-
-    // Update area calculations and display for the current year
-    const currentAreaKm2 = computeAreaKm2(data).toFixed(2);
-    d3.select("#areaValue").text(currentAreaKm2);
-
-    // Calculate change since 1850 (if available)
-    const changeSince1850 = area1850 !== null
-      ? (currentAreaKm2 - area1850).toFixed(2)
-      : "0.00";
-    d3.select("#changeValue").text(changeSince1850);
-
-    // Calculate change per year compared to the previous year
-    const currentYearIndex = years.indexOf(year);
-    if (currentYearIndex > 0) {
-      const previousYear = years[currentYearIndex - 1];
-      const prevData = await d3.json(glacierData[previousYear]);
-      const prevAreaKm2 = computeAreaKm2(prevData);
-      const yearDifference = year - previousYear;
-      const absoluteChangePerYear = ((currentAreaKm2 - prevAreaKm2) / yearDifference).toFixed(2);
-      const relativeChangePerYear = ((absoluteChangePerYear / prevAreaKm2) * 100).toFixed(2);
-
-      d3.select("#changePerYearValue").text(absoluteChangePerYear);
-      d3.select("#changePerYearPercent").text(relativeChangePerYear);
-    } else {
-      d3.select("#changePerYearValue").text("0");
-      d3.select("#changePerYearPercent").text("0");
-    }
-  } catch (error) {
-    console.error("Error rendering glacier data:", error);
-  }
-}
 
 
-function zoomToGlaciers(mainId) {
-  // Filter features with the same main ID
-  const matchingFeatures = g.selectAll("path")
-    .filter(d => d.properties['sgi-id'].split('-')[0] === mainId);
+// STACKED BAR CHART //
 
-  if (!matchingFeatures.empty()) {
-    // Calculate the bounding box of the matching features
-    const [[x0, y0], [x1, y1]] = d3.geoPath(projection).bounds({
-      type: "FeatureCollection",
-      features: matchingFeatures.data()
-    });
-
-    // Calculate the scale and translate for zooming
-    const scale = Math.min(8, 0.9 / Math.max((x1 - x0) / width, (y1 - y0) / height));
-    const translate = [(width - scale * (x0 + x1)) / 2, (height - scale * (y0 + y1)) / 2];
-
-    // Apply the zoom transformation
-    svg.transition().duration(750).call(
-      zoom.transform,
-      d3.zoomIdentity.translate(translate[0], translate[1]).scale(scale)
-    );
-  } else {
-    console.warn(`No glaciers found with ID: ${mainId}`);
-  }
-}
-
+let currentYearIndex = 0 // Default to the first year in the dataset
 
 // Function to create the stacked bar chart
-function updateStackedBar(currentYearIndex) {
-  const svg = d3.select("#stacked-bar");
+function updateStackedBar(currentYearIndex, object = "stacked-bar-full", glacierId = null) {
+  object = "#" + object;
+  const svg = d3.select(object);
   const width = +svg.attr("width");
   const height = +svg.attr("height");
 
   // Clear any existing bars
   svg.selectAll("*").remove();
 
-  // Get the glacier area for the current year and 1850
-  const currentArea = glacierAreas[currentYearIndex]?.area || 0;
+  // Helper to optionally filter by glacierId
+  const filterById = (entry) => {
+    if (!glacierId) return entry; // Allow all entries if no glacierId is specified
+  
+    // Check if glacierId exists as a key in the areas object
+    if (glacierId in entry["areas"]) {
+      // Return a new object with the year and total area for the glacier ID
+      return {
+        year: entry.year,
+        totalArea: entry["areas"][glacierId] // Access the area for the glacier ID
+      };
+    }
+  
+    return null; // Return null if the glacier ID does not exist in the areas object
+  };
+  
+  // Filter data
+  const filtered1850 = glacierAreas
+    .filter(d => d.year === 1850) // Filter by year
+    .map(filterById) // Map to the transformed object
+    .filter(d => d); // Remove null values from the result
+
+  const filteredCurrent = glacierAreas
+    .filter(d => d.year === glacierAreas[currentYearIndex].year) // Filter by year
+    .map(filterById) // Map to the transformed object
+    .filter(d => d); // Remove null values from the result
+
+  // Sum areas for the selected group or all glaciers
+  const area1850 = d3.sum(filtered1850, d => d.totalArea);
+  const currentArea = d3.sum(filteredCurrent, d => d.totalArea);
   const remainingProportion = area1850 ? currentArea / area1850 : 0;
   const lostProportion = 1 - remainingProportion;
 
-  // Ensure proportions are valid numbers
+  console.log("Glacier ID:", glacierId || "ALL");
+  console.log("Current area:", currentArea);
+  console.log("Remaining proportion:", remainingProportion);
+  console.log("Lost proportion:", lostProportion);
+
   if (isNaN(remainingProportion) || isNaN(lostProportion)) {
     console.error("Invalid proportions for stacked bar chart");
     return;
   }
 
-  // Define the bar segments
+  // Define segments
   const segments = [
-    { proportion: lostProportion, color: "#ffa196" }, // Lost glacier area
-    { proportion: remainingProportion, color: "#C8E9E9" } // Remaining glacier area
+    { proportion: lostProportion, color: "#ffa196" },
+    { proportion: remainingProportion, color: "#C8E9E9" }
   ];
 
-  // Create the stacked bar
+  // Draw the bar
   let xOffset = 0;
   svg.selectAll("rect")
     .data(segments)
@@ -322,146 +320,591 @@ function updateStackedBar(currentYearIndex) {
     .attr("fill", d => d.color);
 }
 
-function updateRetreatRateChart(currentYearIndex) {
-    const svg = d3.select("#retreat-rate-chart");
-    const width = +svg.attr("width");
-    const height = +svg.attr("height");
-  
-    // Clear any existing bars
-    svg.selectAll("*").remove();
-  
-    // Calculate the retreat rates for each time period, starting from the second year
-    const retreatRates = glacierAreas.slice(1).map((current, index) => {
-      const previous = glacierAreas[index]; // Compare with the previous year
-      const yearDifference = current.year - previous.year;
-      const areaDifference = previous.area - current.area;
-      const rate = (areaDifference / yearDifference).toFixed(2); // Retreat rate (km²/year)
-      return { year: current.year, rate };
-    });
-  
-    // Define the bar height and spacing
-    const barHeight = 20;
-    const barSpacing = 10;
-  
-    // Define the maximum retreat rate for scaling
-    const maxRate = d3.max(retreatRates, d => +d.rate);
-  
-    // Create a scale for the bar widths
-    const xScale = d3.scaleLinear()
-      .domain([0, maxRate])
-      .range([0, width - 100]); // Leave space for labels
-  
-    // Create the bars
-    svg.selectAll("rect")
-      .data(retreatRates)
-      .enter()
-      .append("rect")
-      .attr("x", 0)
-      .attr("y", (d, i) => i * (barHeight + barSpacing))
-      .attr("width", d => xScale(+d.rate))
-      .attr("height", barHeight)
-      .attr("fill", (d, i) => i + 1 === currentYearIndex ? "#ffa196" : "#C8E9E9"); // Highlight the selected year
-  
-    // Add labels for the retreat rates
-    svg.selectAll("text")
-      .data(retreatRates)
-      .enter()
-      .append("text")
-      .attr("x", d => xScale(+d.rate) + 5) // Position the label to the right of the bar
-      .attr("y", (d, i) => i * (barHeight + barSpacing) + barHeight / 2 + 5)
-      .attr("fill", "#000")
-      .style("font-size", "12px")
-      .text(d => `${d.rate} km² per year`);
-  
-    // Add year labels to the left of the bars
-    svg.selectAll(".year-label")
-      .data(retreatRates)
-      .enter()
-      .append("text")
-      .attr("x", -5) // Position the label to the left of the bar
-      .attr("y", (d, i) => i * (barHeight + barSpacing) + barHeight / 2 + 5)
-      .attr("text-anchor", "end")
-      .attr("fill", "#000")
-      .style("font-size", "12px")
-      .text(d => d.year);
+
+
+
+
+
+
+
+
+function updateHorizontalBarChart(selectedYear, chartId = "glacier-bar-chart") {
+  // Select the SVG element by id (ensure your SVG in the HTML has width and height attributes)
+  const svg = d3.select("#" + chartId);
+  const margin = { top: 20, right: 20, bottom: 30, left: 80 };
+  const width = +svg.attr("width") - margin.left - margin.right;
+  const height = +svg.attr("height") - margin.top - margin.bottom;
+
+  // Clear previous chart contents
+  svg.selectAll("*").remove();
+
+  // Append a group element which will contain the chart
+  const g = svg.append("g")
+               .attr("transform", `translate(${margin.left},${margin.top})`);
+
+  // Find the data for the specified year
+  const yearData = glacierAreas.find(d => d.year === selectedYear);
+  if (!yearData) {
+    console.error("No data found for year", selectedYear);
+    return;
   }
 
-function populateIdSelector() {
-    const idSet = new Set(); // Use a Set to store unique IDs
-  
-    // Iterate through all GeoJSON files
-    const promises = years.map(year => {
-      return d3.json(glacierData[year]).then(data => {
-        data.features.forEach(feature => {
-          const sgiId = feature.properties['sgi-id']; // Get the 'sgi-id' field
-          if (sgiId) {
-            // Extract the main ID (before the '-')
-            const mainId = sgiId.split('-')[0];
-            idSet.add(mainId); // Add the main ID to the Set
-          }
-        });
-      });
-    });
-  
-    // Once all data is loaded, populate the dropdown
-    Promise.all(promises).then(() => {
-      const idSelector = d3.select("#idSelector");
-  
-      // Add an option for each unique ID
-      Array.from(idSet).sort().forEach(id => {
-        idSelector.append("option")
-          .attr("value", id)
-          .text(id);
-      });
-  
-      console.log("Dropdown populated with IDs:", Array.from(idSet));
-    });
+  // Convert the areas object into an array of objects with properties: glacierId and area.
+  const glacierEntries = Object.entries(yearData.areas).map(([glacierId, area]) => ({
+    glacierId,
+    area
+  }));
+
+  // Set up scales:
+  // x scale: for the area values. Range from 0 to the maximum area among all glaciers.
+  const x = d3.scaleLinear()
+              .domain([0, d3.max(glacierEntries, d => d.area)])
+              .range([0, width]);
+
+  // y scale: for the glacier identifiers. Use a band scale for discrete identifiers.
+  const y = d3.scaleBand()
+              .domain(glacierEntries.map(d => d.glacierId))
+              .range([0, height])
+              .padding(0.1);
+
+  // Draw the bars:
+  g.selectAll(".bar")
+   .data(glacierEntries)
+   .enter()
+   .append("rect")
+   .attr("class", "bar")
+   .attr("x", 0)
+   .attr("y", d => y(d.glacierId))
+   .attr("height", y.bandwidth())
+   .attr("width", d => x(d.area))
+   .attr("fill", "#69b3a2");
+
+  // Add y-axis with glacier IDs:
+  g.append("g")
+   .attr("class", "y-axis")
+   .call(d3.axisLeft(y));
+
+  // (Optional) Add x-axis to show area scale:
+  g.append("g")
+   .attr("class", "x-axis")
+   .attr("transform", `translate(0,${height})`)
+   .call(d3.axisBottom(x).ticks(5));
+
+  // (Optional) Add labels for the area values at the end of each bar:
+  g.selectAll(".label")
+   .data(glacierEntries)
+   .enter()
+   .append("text")
+   .attr("class", "label")
+   .attr("x", d => x(d.area) + 5)
+   .attr("y", d => y(d.glacierId) + y.bandwidth() / 2)
+   .attr("dy", "0.35em")
+   .text(d => d.area.toFixed(1));
 }
 
-populateIdSelector();
-  
+
+
+
+
+
+
+
+
+
+
+
+
+// Extract set of glacier IDs from input features
+function extractGlacierIDs(features) {
+  const idSet = new Set();
+  features.forEach((feature) => {
+    const glacierId = feature.properties['glacier-id'];
+
+    if (glacierId) {
+      // Extract the part of the ID until a letter follows a digit
+      const simplifiedId = glacierId.match(/^[A-Za-z]*\d+/)?.[0];
+      if (simplifiedId) {
+        idSet.add(simplifiedId);
+      }
+    }
+  });
+  return idSet;
+}
+
+
+// Populate the dropdown selector with glacier IDs
+function populateIdSelector() {
+
+  // Query features from the source to extract unique glacier IDs
+  const features = map.querySourceFeatures('glaciers');
+  const idSet = extractGlacierIDs(features);
+
+  // Populate the dropdown
+  const idSelector = document.getElementById('idSelector');
+  idSelector.innerHTML = ''; // Clear existing options
+  const allOption = document.createElement('option');
+  allOption.value = 'All';
+  allOption.textContent = 'All Glaciers';
+  idSelector.appendChild(allOption);
+
+  Array.from(idSet).sort().forEach((id) => {
+    const option = document.createElement('option');
+    option.value = id;
+    option.textContent = id;
+    idSelector.appendChild(option);
+  });
+}
+
+// Zoom to the selected glacier
+function zoomToGlacier(glacierId) {
+
+  if (glacierId === 'All') {
+    // Reset to the full extent of the default year's data
+    map.flyTo({
+      center: [8.6, 46.5], // Longitude, latitude
+      zoom: 7, // Zoom level
+      speed: 1.5, // Optional, controls animation speed
+      curve: 1, // Optional, controls animation curve
+      essential: true // This makes the transition work even for users with reduced motion settings
+    });
+    return;
+  }
+
+  // Preprocess the features to extract simplified IDs
+  const features = map.querySourceFeatures('glaciers');
+  const matchingFeatures = features.filter((feature) => {
+    const fullId = feature.properties['glacier-id'];
+    //console.log("Full ID:", fullId); // Debugging log
+    return fullId === glacierId; // Match against the selected glacier ID
+  });
+
+  console.log("Zooming to glacier ID:", glacierId); // Debugging log
+
+  if (matchingFeatures.length > 0) {
+    // Calculate the bounding box of the matching features
+    const bounds = matchingFeatures.reduce((bounds, feature) => {
+      return bounds.extend(turf.bbox(feature));
+    }, new maplibregl.LngLatBounds());
+
+    // Zoom to the bounding box
+    map.fitBounds(bounds, {
+      padding: 50,
+      maxZoom: 14,
+      duration: 1000
+    });
+  } else {
+    console.warn(`No glacier found with ID: ${glacierId}`);
+  }
+}
+
+
+
+
+
+
+
 populateGlacierAreas(() => {
-  // Initially render the first year (1850)
-  renderGlacier(1850);
 
-  // Update the stacked bar chart
+  // Update the stacked bar chart (which should now reference entry.totalArea when needed)
   updateStackedBar(currentYearIndex);
-
-  // Update the retreat rate chart
-  updateRetreatRateChart(currentYearIndex);
 });
 
-d3.select("#idSelector").on("change", function () {
-  selectedGlacierId = this.value; // Update the selected glacier ID
-  console.log(`Selected glacier ID: ${selectedGlacierId}`);
 
-  // Re-render the map for the current year to apply the highlight
-  const selectedYear = years[currentYearIndex];
-  renderGlacier(selectedYear);
 
-  // Zoom to the selected glacier
-  if (selectedGlacierId) {
-    zoomToGlaciers(selectedGlacierId);
+
+
+
+
+
+
+
+
+
+
+
+// Global variable to track selected feature IDs
+let selectedStateIds = [];
+
+// Global variable to track selected glacier identifier (persistent ID)
+let selectedGlacierPersistentId = null;
+// Global variable to track the selected feature IDs from the map source
+
+// Function to clear current selection from the map
+function clearGlacierSelection() {
+  selectedStateIds.forEach(id => {
+    map.setFeatureState({ source: 'glaciers', id: id }, { selected: false });
+  });
+  selectedStateIds = [];
+  console.log("Cleared previous glacier selections.");
+}
+
+
+
+// Function to update glacier selection using a persistent glacier ID
+function updateGlacierSelection(selectedGlacierId) {
+  clearGlacierSelection();
+
+  console.log("Applying selection for glacier with persistent ID:", selectedGlacierId);
+  if (!selectedGlacierId || selectedGlacierId === 'undefined') {
+    console.log("Glacier ID is missing or invalid.");
+    return;
+  }
+  
+  // Query features using the persistent glacier ID (not the auto-generated feature.id)
+  const featuresWithSameId = map.querySourceFeatures('glaciers', {
+    sourceLayer: 'glaciers-layer',
+    filter: ['==', ['get', 'glacier-id'], selectedGlacierId]
+  });
+  
+  // Use the new feature ids from the updated data for highlighting
+  selectedStateIds = featuresWithSameId.map(feature => feature.id);
+  selectedStateIds.forEach(id => {
+    map.setFeatureState({ source: 'glaciers', id: id }, { selected: true });
+  });
+  
+  console.log("Updated selection on the map for glacier ID:", selectedGlacierId);
+}
+
+
+
+// Existing slider code for fetching and updating data
+document.getElementById('yearSlider').addEventListener('input', (event) => {
+  const selectedYearIndex = parseInt(event.target.value, 10);
+  const selectedYear = years[selectedYearIndex];
+
+  // Assuming `currentYear` is defined or derived from your slider selection
+  updateHorizontalBarChart(selectedYear, "glacier-bar-chart");
+
+  updateStackedBar(selectedYearIndex)
+  updateStackedBar(selectedYearIndex, "stacked-bar-glacier", selectedGlacierPersistentId)
+
+  // Fetch the new GeoJSON data for the selected year
+  fetch(glacierData[selectedYear])
+    .then((response) => response.json())
+    .then((data) => {
+      // Instead of reassigning IDs from scratch, ensure each feature has a persistent glacier-id 
+      // For demonstration, assume each feature has a 'glacier-id' property already.
+      
+      // If you need to assign unique IDs for the map interaction, do that:
+      data.features.forEach((feature, index) => {
+        // Only assign if not already present, or assign a new value if necessary
+        if (!feature.id) {
+          feature.id = index;
+        }
+      });
+      
+      // Update the GeoJSON source with the new data
+      const source = map.getSource('glaciers');
+      if (source) {
+        const features = map.querySourceFeatures('glaciers', { sourceLayer: 'glaciers-layer' });
+        features.forEach(feature => {
+          map.setFeatureState({ source: 'glaciers', id: feature.id }, { selected: false });
+        });
+        source.setData(data);
+      } else {
+        console.error('Glacier source not found.');
+      }
+      
+      // Once the map is idle (meaning the new data has rendered), reapply the glacier selection
+      map.once('idle', () => {
+        // Reapply selection using the stored persistent ID, if there is one.
+        if (selectedGlacierPersistentId) {
+          updateGlacierSelection(selectedGlacierPersistentId);
+        }
+      });
+      
+      // Calculate and display the total glacier area, etc.
+      displayTotalGlacierArea(data);
+    })
+    .catch((error) => {
+      console.error('Error loading GeoJSON data:', error);
+    });
+});
+
+// When the user changes the glacier in your drop-down or elsewhere,
+// store the persistent glacier ID globally and update selection accordingly.
+d3.select("#idSelector").on("change", function() {
+  selectedGlacierPersistentId = d3.select(this).property("value");
+  updateGlacierSelection(selectedGlacierPersistentId);
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Handle dropdown selection
+document.getElementById('idSelector').addEventListener('change', (event) => {
+
+  const glacierId = this.value;
+  const dropdown = document.getElementById('idSelector');
+
+  // Grey out the dropdown and show the 'Return to All' button if a specific glacier is selected
+  if (glacierId !== 'undefined') {
+    dropdown.disabled = true; // Disable the dropdown
+    document.getElementById('returnToAll').style.display = 'inline'; // Show the button
+    console.log("Dropdown disabled and button shown"); // Debugging log
+    
+  } else {
+    // Reset to default state if 'All' is selected
+    dropdown.disabled = false;
+    document.getElementById('returnToAll').style.display = 'none'; // Hide the button
+  }
+
+  const selectedGlacierId = event.target.value;
+  zoomToGlacier(selectedGlacierId);
+  // Reset the previously selected glacier's state
+  if (selectedStateId !== null) {
+    map.setFeatureState(
+      { source: 'glaciers', id: selectedStateId },
+      { selected: false }
+    );
+  }
+  
+  // Set the new selected glacier's state
+  selectedStateId = selectedGlacierId; // Track the currently selected feature ID
+
+
+  console.log("Selected glacier ID:", selectedStateId); // Debugging log
+  console.log("Glacier ID:", glacierId); // Debugging log
+
+
+  if (selectedStateId == 'undefined') {
+    console.log('Glacier ID (', selectedStateId, ') is missing.');
+  }
+  else {
+    // Find all features with the same glacier-id
+    console.log("Finding features with glacier ID:", selectedStateId); // Debugging log
+    const featuresWithSameId = map.querySourceFeatures('glaciers', {
+      sourceLayer: 'glaciers-layer',
+      filter: ['==', ['get', 'glacier-id'], selectedStateId]
+    });
+
+    // Highlight all features with the same glacier-id
+    selectedStateIds = featuresWithSameId.map((feature) => feature.id); // Update the global tracking variable
+    selectedStateIds.forEach((id) => {
+      map.setFeatureState(
+        { source: 'glaciers', id: id },
+        { selected: true }
+      );
+    });
+  }
+
+  console.log("stacked-bar-glacier for year index", currentYearIndex, "and glacierID", selectedGlacierId); // Debugging log
+  updateStackedBar(currentYearIndex, "stacked-bar-glacier", selectedGlacierId); // Update the stacked bar chart for the glacier group
+  
+});
+
+document.getElementById('returnToAll').addEventListener('click', function () {
+  const dropdown = document.getElementById('idSelector');
+
+  // Clear any selected features
+  clearGlacierSelection();
+  // Reset the stored persistent selection ID
+  selectedGlacierPersistentId = null;
+  console.log("All glaciers returned to normal.");
+
+  // Reset the dropdown to 'All'
+  dropdown.value = 'All';
+  dropdown.disabled = false; // Enable the dropdown again
+  this.style.display = 'none'; // Hide the 'Return to All' button
+
+  // Reset the map view
+  map.flyTo({
+    center: [8.6, 46.5], // Longitude, latitude
+    zoom: 7, // Zoom level
+    speed: 1.2,
+    curve: 1,
+    essential: true
+  });
+
+  // Unselect previously highlighted glaciers
+  if (selectedStateIds && selectedStateIds.length > 0) {
+    selectedStateIds.forEach((id) => {
+      map.setFeatureState(
+        { source: 'glaciers', id: id },
+        { selected: false } // Reset the selected state
+      );
+    });
+    selectedStateIds = []; // Clear the tracking variable
+  }
+
+  updateStackedBar(0, "stacked-bar-glacier", "All"); // Update the stacked bar chart for the glacier group
+
+  console.log("Reset to 'All': Cleared highlighted glaciers, reset the map view, and enabled the dropdown.");
+});
+
+
+
+
+
+// Populate the dropdown on map load
+map.on('load', () => {
+  const source = map.getSource('glaciers');
+  if (source) {
+    // Fetch and parse the GeoJSON data
+    fetch(glacierData[defaultYear])
+      .then((response) => response.json())
+      .then((data) => {
+        // Add unique IDs to features
+        data.features.forEach((feature, index) => {
+          feature.id = index; // Assign a unique ID to each feature
+        });
+        source.setData(data);
+
+        // Populate the dropdown with IDs for the default year
+        populateIdSelector();
+      })
+      .catch((error) => {
+        console.error('Error loading GeoJSON data:', error);
+      });
   }
 });
 
-// Update visualization when the slider value changes
-d3.select("#yearSlider").on("input", function () {
-  currentYearIndex = +this.value; // Update the global variable
-  const selectedYear = years[currentYearIndex];
 
-  // Update the label to show the selected year
-  d3.select("#yearLabel").text(selectedYear);
 
-  // Render the glacier extent for the selected year
-  renderGlacier(selectedYear);
 
-  // Update the stacked bar chart
-  updateStackedBar(currentYearIndex);
 
-  // Update the retreat rate chart
-  updateRetreatRateChart(currentYearIndex);
+
+// Add click event listener for glaciers
+map.on('click', 'glaciers-layer', (e) => {
+  if (e.features && e.features.length > 0) {
+    const clickedFeature = e.features[0];
+    const glacierId = clickedFeature.properties['glacier-id']; // Use 'glacier-id' for grouping
+    console.log('Clicked glacier ID:', glacierId);
+
+    if (!glacierId) {
+      console.error('Glacier ID is missing.');
+      return;
+    }
+
+    // Reset the previously selected glaciers' states
+    if (selectedStateIds && selectedStateIds.length > 0) {
+      selectedStateIds.forEach((id) => {
+        map.setFeatureState(
+          { source: 'glaciers', id: id },
+          { selected: false }
+        );
+      });
+    }
+
+    // Find all features with the same glacier-id
+    const featuresWithSameId = map.querySourceFeatures('glaciers', {
+      sourceLayer: 'glaciers-layer',
+      filter: ['==', ['get', 'glacier-id'], glacierId]
+    });
+
+    // Highlight all features with the same glacier-id
+    selectedStateIds = featuresWithSameId.map((feature) => feature.id); // Update the global tracking variable
+    selectedStateIds.forEach((id) => {
+      map.setFeatureState(
+        { source: 'glaciers', id: id },
+        { selected: true }
+      );
+    });
+
+    // Set the dropdown to the clicked glacier's ID
+    const idSelector = document.getElementById('idSelector');
+    idSelector.value = glacierId;
+
+    console.log("stacked-bar-glacier for year index", currentYearIndex, "and glacierID", glacierId); // Debugging log
+    updateStackedBar(currentYearIndex, "stacked-bar-glacier", glacierId); // Update the stacked bar chart for the glacier group
+
+    // Calculate the combined bounding box manually
+    let combinedBounds = null;
+    featuresWithSameId.forEach((feature) => {
+      const featureBounds = turf.bbox(feature);
+      if (!combinedBounds) {
+        combinedBounds = featureBounds; // Initialize with the first feature's bounds
+      } else {
+        combinedBounds = [
+          Math.min(combinedBounds[0], featureBounds[0]), // Min Longitude
+          Math.min(combinedBounds[1], featureBounds[1]), // Min Latitude
+          Math.max(combinedBounds[2], featureBounds[2]), // Max Longitude
+          Math.max(combinedBounds[3], featureBounds[3])  // Max Latitude
+        ];
+      }
+    });
+
+    if (combinedBounds) {
+      // Zoom to the glacier group's extent
+      map.fitBounds(combinedBounds, {
+        padding: 50,
+        maxZoom: 14,
+        duration: 1000
+      });
+    } else {
+      console.error('No bounds found for glacier features.');
+    }
+  }
 });
 
-// Populate the dropdown with unique IDs
-populateIdSelector();
+// Change cursor to pointer when hovering over glaciers
+map.on('mouseenter', 'glaciers-layer', () => {
+  map.getCanvas().style.cursor = 'pointer';
+});
+
+
+
+// Create a popup, but don't add it to the map yet
+const popup = new maplibregl.Popup({
+  closeButton: false,
+  closeOnClick: false
+});
+
+map.on('mousemove', 'glaciers-layer', (e) => {
+  if (e.features && e.features.length > 0) {
+    const feature = e.features[0];
+
+    // Set the popup content using the attributes of the feature
+    const glacierId = feature.properties['glacier-id'];
+    const totalArea = feature.properties['total-area'];
+    const year = feature.properties['year'];
+
+    const popupContent = `
+      <div>
+        <strong>Glacier ID:</strong> ${glacierId}<br>
+        <strong>Total Area:</strong> ${totalArea}<br>
+        <strong>Year:</strong> ${year}
+      </div>
+    `;
+
+    // Set the popup coordinates and content
+    popup.setLngLat(e.lngLat).setHTML(popupContent).addTo(map);
+
+    // Change the cursor style to indicate interactivity
+    map.getCanvas().style.cursor = 'pointer';
+  }
+});
+
+map.on('mouseleave', 'glaciers-layer', () => {
+  // Remove the popup when the mouse leaves the layer
+  popup.remove();
+
+  // Reset the cursor style
+  map.getCanvas().style.cursor = '';
+});
+

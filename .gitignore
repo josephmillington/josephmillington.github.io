@@ -1,1 +1,8 @@
 josephmillington.github.io.code-workspace
+/backup_data
+/node_modules
+data/2016.geojson
+data/2010.geojson
+data/1973.geojson
+data/1931.geojson
+data/1850.geojson
