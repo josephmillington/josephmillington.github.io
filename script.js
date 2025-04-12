@@ -38,12 +38,6 @@
 
 
 // TODO: handle positive retreat rates (i.e., growth)
-<<<<<<< Updated upstream
-// TODO: test adding d3 SVG code into slider update block
-=======
-// TODO: add unique ID column to vector tile features
-
->>>>>>> Stashed changes
 
 // To run Local Server on Windows:
 // cd C:\Users\joemi\Documents\GitHub\josephmillington.github.io
