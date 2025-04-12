@@ -380,54 +380,107 @@ populateGlacierAreas(() => {
 
 
 
-// Update the map when the slider value changes
+
+
+
+// Global variable to track selected feature IDs
+let selectedStateIds = [];
+
+// Global variable to track selected glacier identifier (persistent ID)
+let selectedGlacierPersistentId = null;
+// Global variable to track the selected feature IDs from the map source
+
+// Function to clear current selection from the map
+function clearGlacierSelection() {
+  selectedStateIds.forEach(id => {
+    map.setFeatureState({ source: 'glaciers', id: id }, { selected: false });
+  });
+  selectedStateIds = [];
+  console.log("Cleared previous glacier selections.");
+}
+
+
+
+// Function to update glacier selection using a persistent glacier ID
+function updateGlacierSelection(selectedGlacierId) {
+  clearGlacierSelection();
+
+  console.log("Applying selection for glacier with persistent ID:", selectedGlacierId);
+  if (!selectedGlacierId || selectedGlacierId === 'undefined') {
+    console.log("Glacier ID is missing or invalid.");
+    return;
+  }
+  
+  // Query features using the persistent glacier ID (not the auto-generated feature.id)
+  const featuresWithSameId = map.querySourceFeatures('glaciers', {
+    sourceLayer: 'glaciers-layer',
+    filter: ['==', ['get', 'glacier-id'], selectedGlacierId]
+  });
+  
+  // Use the new feature ids from the updated data for highlighting
+  selectedStateIds = featuresWithSameId.map(feature => feature.id);
+  selectedStateIds.forEach(id => {
+    map.setFeatureState({ source: 'glaciers', id: id }, { selected: true });
+  });
+  
+  console.log("Updated selection on the map for glacier ID:", selectedGlacierId);
+}
+
+
+
+// Existing slider code for fetching and updating data
 document.getElementById('yearSlider').addEventListener('input', (event) => {
   const selectedYearIndex = parseInt(event.target.value, 10);
   const selectedYear = years[selectedYearIndex];
-
-  // Update the displayed year in the UI
-  //document.getElementById('active-year').innerText = selectedYear;
 
   // Fetch the new GeoJSON data for the selected year
   fetch(glacierData[selectedYear])
     .then((response) => response.json())
     .then((data) => {
-      // Assign unique IDs to features
+      // Instead of reassigning IDs from scratch, ensure each feature has a persistent glacier-id 
+      // For demonstration, assume each feature has a 'glacier-id' property already.
+      
+      // If you need to assign unique IDs for the map interaction, do that:
       data.features.forEach((feature, index) => {
-        feature.id = index; // Assign a unique ID to each feature
+        // Only assign if not already present, or assign a new value if necessary
+        if (!feature.id) {
+          feature.id = index;
+        }
       });
-
-      console.log("Selected state ID:", selectedStateId); // Debugging log
-
+      
       // Update the GeoJSON source with the new data
       const source = map.getSource('glaciers');
       if (source) {
+        const features = map.querySourceFeatures('glaciers', { sourceLayer: 'glaciers-layer' });
+        features.forEach(feature => {
+          map.setFeatureState({ source: 'glaciers', id: feature.id }, { selected: false });
+        });
         source.setData(data);
       } else {
         console.error('Glacier source not found.');
       }
-
-      // Reset the selected glacier state
-//      if (selectedStateId !== null) {
- //       map.setFeatureState(
-  //        { source: 'glaciers', id: selectedStateId },
-   //       { selected: false }
-    //    );
-     //   selectedStateId = null;
-     // }
-
-      // Update the dropdown with IDs for the selected year
-//      map.once('idle', () => {
-//        populateIdSelector();
-//      });
-
-      // Calculate and display the total glacier area
+      
+      // Once the map is idle (meaning the new data has rendered), reapply the glacier selection
+      map.once('idle', () => {
+        // Reapply selection using the stored persistent ID, if there is one.
+        if (selectedGlacierPersistentId) {
+          updateGlacierSelection(selectedGlacierPersistentId);
+        }
+      });
+      
+      // Calculate and display the total glacier area, etc.
       displayTotalGlacierArea(data);
     })
     .catch((error) => {
       console.error('Error loading GeoJSON data:', error);
     });
+});
 
+// When the user changes the glacier in your drop-down or elsewhere,
+// store the persistent glacier ID globally and update selection accordingly.
+d3.select("#idSelector").on("change", function() {
+  selectedGlacierPersistentId = d3.select(this).property("value");
+  updateGlacierSelection(selectedGlacierPersistentId);
 });
 
 
@@ -435,24 +488,23 @@ document.getElementById('yearSlider').addEventListener('input', (event) => {
 
 
 
-// Update visualization when the slider value changes
-d3.select("#yearSlider").on("input", function () {
-  currentYearIndex = +this.value; // Update the global variable
-  const selectedYear = years[currentYearIndex];
 
-  console.log("Selected year:", selectedYear); // Debugging log
-  console.log("Current year index:", currentYearIndex); // Debugging log
 
-  // Update the label to show the selected year
-  d3.select("#yearLabel").text(selectedYear);
 
-  // Update the full-year stacked bar chart
-  updateStackedBar(currentYearIndex, "stacked-bar-full");
 
-  // Update the glacier-specific stacked bar chart
-  const selectedGlacierId = d3.select("#idSelector").property("value"); // Get the selected glacier ID
-  updateStackedBar(currentYearIndex, "stacked-bar-glacier", selectedGlacierId);
-});
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -465,13 +517,12 @@ document.getElementById('idSelector').addEventListener('change', (event) => {
   const glacierId = this.value;
   const dropdown = document.getElementById('idSelector');
 
-  console.log("Selected glacier ID:", glacierId); // Debugging log
-
   // Grey out the dropdown and show the 'Return to All' button if a specific glacier is selected
   if (glacierId !== 'undefined') {
     dropdown.disabled = true; // Disable the dropdown
     document.getElementById('returnToAll').style.display = 'inline'; // Show the button
     console.log("Dropdown disabled and button shown"); // Debugging log
+    
   } else {
     // Reset to default state if 'All' is selected
     dropdown.disabled = false;
@@ -490,15 +541,43 @@ document.getElementById('idSelector').addEventListener('change', (event) => {
   
   // Set the new selected glacier's state
   selectedStateId = selectedGlacierId; // Track the currently selected feature ID
-  map.setFeatureState(
-    { source: 'glaciers', id: selectedStateId },
-    { selected: true }
-  );
+
+
+  console.log("Selected glacier ID:", selectedStateId); // Debugging log
+  console.log("Glacier ID:", glacierId); // Debugging log
+
+
+  if (selectedStateId == 'undefined') {
+    console.log('Glacier ID (', selectedStateId, ') is missing.');
+  }
+  else {
+    // Find all features with the same glacier-id
+    console.log("Finding features with glacier ID:", selectedStateId); // Debugging log
+    const featuresWithSameId = map.querySourceFeatures('glaciers', {
+      sourceLayer: 'glaciers-layer',
+      filter: ['==', ['get', 'glacier-id'], selectedStateId]
+    });
+
+    // Highlight all features with the same glacier-id
+    selectedStateIds = featuresWithSameId.map((feature) => feature.id); // Update the global tracking variable
+    selectedStateIds.forEach((id) => {
+      map.setFeatureState(
+        { source: 'glaciers', id: id },
+        { selected: true }
+      );
+    });
+  }
   
 });
 
 document.getElementById('returnToAll').addEventListener('click', function () {
   const dropdown = document.getElementById('idSelector');
+
+  // Clear any selected features
+  clearGlacierSelection();
+  // Reset the stored persistent selection ID
+  selectedGlacierPersistentId = null;
+  console.log("All glaciers returned to normal.");
 
   // Reset the dropdown to 'All'
   dropdown.value = 'All';
@@ -513,6 +592,19 @@ document.getElementById('returnToAll').addEventListener('click', function () {
     curve: 1,
     essential: true
   });
+
+  // Unselect previously highlighted glaciers
+  if (selectedStateIds && selectedStateIds.length > 0) {
+    selectedStateIds.forEach((id) => {
+      map.setFeatureState(
+        { source: 'glaciers', id: id },
+        { selected: false } // Reset the selected state
+      );
+    });
+    selectedStateIds = []; // Clear the tracking variable
+  }
+
+  console.log("Reset to 'All': Cleared highlighted glaciers, reset the map view, and enabled the dropdown.");
 });
 
 
@@ -542,7 +634,6 @@ map.on('load', () => {
   }
 });
 
-let selectedStateIds = []; // Track the currently selected glacier IDs
 
 
 
@@ -666,3 +757,4 @@ map.on('mouseleave', 'glaciers-layer', () => {
   // Reset the cursor style
   map.getCanvas().style.cursor = '';
 });
+
