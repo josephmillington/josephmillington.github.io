@@ -137,10 +137,3 @@ for file in os.listdir(srcDir):
         )
         print(f'Running {COMMAND}')
         result = os.system(COMMAND)
-
-        # If command was successful, delete the file
-        if result == 0:
-            print(f"Deleting {file} after successful processing.")
-            os.remove(file)
-        else:
-            print(f"Failed to process {file}. File not deleted.")
