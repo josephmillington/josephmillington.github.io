@@ -62,18 +62,82 @@ const glacierData = {
   2016: 'data/2016.geojson'
 };
 
+const basemapData = {
+  'ne_10m_admin_0_countries': 'data/ne_10m_admin_0_countries.geojson',
+  'ne_10m_admin_1_state_provinces': 'data/ne_10m_admin_1_state_provinces.geojson',
+};
+
 // Initialize the MapLibre map
 const map = new maplibregl.Map({
   container: 'map-container',
   style: {
     version: 8,
+    glyphs: 'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf', // Add glyphs URL
     sources: {
       glaciers: {
         type: 'geojson',
         data: glacierData[defaultYear] // Load the default year's data
+      },
+      countries: {
+        type: 'geojson',
+        data: basemapData['ne_10m_admin_0_countries'] // Country boundaries data
+      },
+      provinces: {
+        type: 'geojson',
+        data: basemapData['ne_10m_admin_1_state_provinces'] // State/province boundaries data
       }
     },
     layers: [
+      {
+        id: 'countries-layer',
+        type: 'line', // Use line type for boundaries
+        source: 'countries',
+        paint: {
+          'line-color': '#666', // Grey for country boundaries
+          'line-width': 1
+        }
+      },
+      {
+        id: 'countries-labels', // Add country labels
+        type: 'symbol',
+        source: 'countries',
+        layout: {
+          'text-field': ['get', 'name'], // Use the 'name' property from your GeoJSON
+          'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'], // Specify fonts
+          'text-size': 12, // Font size for labels
+          'text-anchor': 'center' // Anchor labels at the center of each feature
+        },
+        paint: {
+          'text-color': '#333', // Label color
+          'text-halo-color': '#fff', // Add a halo effect
+          'text-halo-width': 1 // Halo width
+        }
+      },
+      {
+        id: 'provinces-layer',
+        type: 'line', // Use line type for boundaries
+        source: 'provinces',
+        paint: {
+          'line-color': '#aaa', // Lighter grey for state/province boundaries
+          'line-width': 0.5
+        }
+      },
+      {
+        id: 'provinces-labels', // Add province/state labels
+        type: 'symbol',
+        source: 'provinces',
+        layout: {
+          'text-field': ['get', 'name'], // Use the 'name' property from your GeoJSON
+          'text-font': ['Open Sans Regular', 'Arial Unicode MS Regular'],
+          'text-size': 10, // Font size for province labels
+          'text-anchor': 'center'
+        },
+        paint: {
+          'text-color': '#555',
+          'text-halo-color': '#fff',
+          'text-halo-width': 0.5
+        }
+      },
       {
         id: 'glaciers-layer',
         type: 'fill',
@@ -93,7 +157,6 @@ const map = new maplibregl.Map({
   center: [8.6, 46.5], // Adjust to your map's center
   zoom: 7
 });
-
 
 
 // CALCULATE AREAS //
