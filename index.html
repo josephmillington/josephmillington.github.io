@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Aletsch Glacier Retreat Visualization</title>
+  <title>Switzerland Glacier Retreat</title>
   <link rel="stylesheet" href="style.css">
   <!-- Include d3.js from a CDN -->
   <script src="https://d3js.org/d3.v7.min.js"></script>
@@ -18,19 +18,19 @@
 </head>
 <body>
   <header>
-    <h1>Aletsch Glacier Retreat</h1>
+    <div id="header-inner">
+      <h1>Switzerland Glacier</br>Retreat Tracker</h1>
+      </br>
+      <body>Visualising the retreat of Switzerland's glaciers since 1850.</body>
+    </div>
   </header>
   
   <!-- Glacier Selector -->
   <div id="id-selector-container">
-    <label for="idSelector">Select ID:</label>
     <select id="idSelector">
-      <option value="">All IDs</option>
+      <option value="">Select glacier...</option>
     </select>
-  </div>
-
-  <div>
-    <span>Selected Year: </span><span id="active-year">1850</span>
+    <button id="returnToAll" style="display: none;">Return to All</button>
   </div>
 
   <!-- Container for the map -->
@@ -54,52 +54,53 @@
 
   <!-- Display for the area change per year -->
   <div id="change-per-year">
-    <strong>Annual Rate of Change Since Previous Survey:</strong> 
+    <strong>Annual Rate of Change Since 1850:</strong> 
     <span id="changePerYearValue">0</span> km² 
     (<span id="changePerYearPercent">0</span>%)
   </div>
 
   <!-- Display a stacked bar -->
   <div id="stacked-bar-container">
-    <svg id="stacked-bar" width="400" height="50"></svg>
+    <strong>National Glacier Retreat</strong>
+    <svg id="stacked-bar-full" width="400" height="25"></svg>
+    <strong>Selected Glacier Retreat</strong>
+    <svg id="stacked-bar-glacier" width="400" height="25"></svg>
   </div>
+
 
   <!-- Retreat rate bar chart -->
   <div id="retreat-rate-chart-container">
     <svg id="retreat-rate-chart" width="400" height="200"></svg>
   </div>
 
-    <!-- References Section -->
+  <!-- References Section -->
   <footer id="references">
     <h2>References</h2>
-    <p>
-      Data for the Aletsch Glacier retreat visualization was sourced from:
-    </p>
-    <ul>
-        <li>
-            <a href="https://www.swissglaciers.org/" target="_blank">Swiss Glacier Monitoring Network (GLAMOS)</a>
-        </li>
-            <h4>2016 Data</h4>
-            <p>Linsbauer, A., Huss, M., Hodel, E., Bauder, A., Fischer, M., Weidmann, Y., Bärtschi, H. & Schmassmann, E. 2021, The new Swiss Glacier Inventory SGI2016: From a topographical to a glaciological dataset. Frontiers in Earth Science, 22, doi:10.3389/feart.2021.704189.</p>
-        <li>
-        </li>
-            <h4>2010 Data</h4>
-            <p>Fischer, M., Huss, M., Barboux, C. & Hoelzle, M. 2014, The new Swiss Glacier Inventory SGI2010: relevance of using high-resolution source data in areas dominated by very small glaciers. Arctic, Antarctic, and Alpine Research, 46, 933–945.</p>
-        <li>
-        </li>
-            <h4>1973 Data</h4>
-            <p>Müller, F., Caflisch, T. & Müller, G. 1976, Firn und Eis der Schweizer Alpen (Gletscherinventar). Publ. Nr. 57/57a. Geographisches Institut, ETH Zürich, 2 Vols. & Maisch, M., Wipf, A., Denneler, B., Battaglia, J. & Benz, C. 2000, Die Gletscher der Schweizer Alpen: Gletscherhochstand 1850, Aktuelle Vergletscherung, Gletscherschwund-Szenarien. (Schlussbericht NFP 31). 2. Auflage. vdf Hochschulverlag an der ETH Zürich, 373 pp. & Paul, F. 2004, The new Swiss glacier inventory 2000 – application of remote sensing and GIS. PhD Thesis, Department of Geography, University of Zurich, Schriftenreihe Physische Geographie, 52, 210 pp.</p>
-        <li>
-        </li>
-            <h4>1931 Data</h4>
-            <p>Mannerfelt, E. S., Dehecq, A., Hugonnet, R., Hodel, E., Huss, M., Bauder, A., and Farinotti, D. 2022, Halving of Swiss glacier volume since 1931 observed from terrestrial image photogrammetry. The Cryosphere, 16, 3249–3268, doi.org/10.5194/tc-16-3249-2022.</p>
-        <li>
-        </li>
-            <h4>1850 Data</h4>
-            <p>Maisch, M., Wipf, A., Denneler, B., Battaglia, J. & Benz, C. 2000, Die Gletscher der Schweizer Alpen: Gletscherhochstand 1850, Aktuelle Vergletscherung, Gletscherschwund-Szenarien. (Schlussbericht NFP 31). 2. Auflage. vdf Hochschulverlag an der ETH Zürich, 373 pp. & Paul, F. 2004, The new Swiss glacier inventory 2000 – application of remote sensing and GIS. PhD Thesis, Department of Geography, University of Zurich, Schriftenreihe Physische Geographie, 52, 210 pp.</p>
-         <li>
-    </ul>
+    <p>Data for this webpage was sourced from <a href="https://www.glamos.ch/en/downloads#inventories" target="_blank">Swiss Glacier Monitoring Network (GLAMOS)</a>:</p>
+    <div class="reference-grid">
+      <div class="reference-item">
+        <h4>2016 Data</h4>
+        <p>Linsbauer, A., Huss, M., Hodel, E., Bauder, A., Fischer, M., Weidmann, Y., Bärtschi, H. & Schmassmann, E. 2021, The new Swiss Glacier Inventory SGI2016: From a topographical to a glaciological dataset. Frontiers in Earth Science, 22, doi:10.3389/feart.2021.704189.</p>
+      </div>
+      <div class="reference-item">
+        <h4>2010 Data</h4>
+        <p>Fischer, M., Huss, M., Barboux, C. & Hoelzle, M. 2014, The new Swiss Glacier Inventory SGI2010: relevance of using high-resolution source data in areas dominated by very small glaciers. Arctic, Antarctic, and Alpine Research, 46, 933–945.</p>
+      </div>
+      <div class="reference-item">
+        <h4>1973 Data</h4>
+        <p>Müller, F., Caflisch, T. & Müller, G. 1976, Firn und Eis der Schweizer Alpen (Gletscherinventar). Publ. Nr. 57/57a. Geographisches Institut, ETH Zürich, 2 Vols. & Maisch, M., Wipf, A., Denneler, B., Battaglia, J. & Benz, C. 2000, Die Gletscher der Schweizer Alpen: Gletscherhochstand 1850, Aktuelle Vergletscherung, Gletscherschwund-Szenarien. (Schlussbericht NFP 31). 2. Auflage. vdf Hochschulverlag an der ETH Zürich, 373 pp. & Paul, F. 2004, The new Swiss glacier inventory 2000 – application of remote sensing and GIS. PhD Thesis, Department of Geography, University of Zurich, Schriftenreihe Physische Geographie, 52, 210 pp.</p>
+      </div>
+      <div class="reference-item">
+        <h4>1931 Data</h4>
+        <p>Mannerfelt, E. S., Dehecq, A., Hugonnet, R., Hodel, E., Huss, M., Bauder, A., and Farinotti, D. 2022, Halving of Swiss glacier volume since 1931 observed from terrestrial image photogrammetry. The Cryosphere, 16, 3249–3268, doi.org/10.5194/tc-16-3249-2022.</p>
+      </div>
+      <div class="reference-item">
+        <h4>1850 Data</h4>
+        <p>Maisch, M., Wipf, A., Denneler, B., Battaglia, J. & Benz, C. 2000, Die Gletscher der Schweizer Alpen: Gletscherhochstand 1850, Aktuelle Vergletscherung, Gletscherschwund-Szenarien. (Schlussbericht NFP 31). 2. Auflage. vdf Hochschulverlag an der ETH Zürich, 373 pp. & Paul, F. 2004, The new Swiss glacier inventory 2000 – application of remote sensing and GIS. PhD Thesis, Department of Geography, University of Zurich, Schriftenreihe Physische Geographie, 52, 210 pp.</p>
+      </div>
+    </div>
   </footer>
+
 
   <!-- Link to our script -->
   <script src="script.js"></script>

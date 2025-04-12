@@ -20,11 +20,13 @@ body {
     text-align: center;
     margin: 0;
     padding: 0;
+    background-color: #FBFBF8; /* Light background color */
   }
 
 #id-selector-container {
-    margin: 1em auto;
-    text-align: center;
+    width: 800px;
+    margin: 0 auto;
+    text-align: left;
 }
   
 #idSelector {
@@ -32,16 +34,46 @@ body {
     font-size: 14px;
 }
 
-header {
-    background: #f8f8f8;
-    padding: 1em 0;
-    border-bottom: 1px solid #ddd;
+#idSelector:disabled {
+    background-color: #f0f0f0;
+    color: #aaa;
+    border: 1px solid #ccc;
+    cursor: not-allowed;
+}
+  
+#returnToAll {
+    margin-left: 1em;
+    padding: 0.5em 1em;
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+  
+#returnToAll:hover {
+    background-color: #0056b3;
 }
 
 h1, h2, h3, h4, h5, h6 {
     font-family: 'Roboto', Arial, sans-serif; /* Apply Roboto to headings */
-    font-weight: 700; /* Use the bold weight for headings */
+    font-weight: 900; /* Use the bold weight for headings */
 }
+
+#header-inner {
+    width: 800px;
+    margin: 0 auto;
+    padding-top: 4em;
+    padding-bottom: 1em;
+    text-align: left;
+  }
+  
+  header h1 {
+    margin: 0;
+    font-size: 3em;
+    font-weight: 900;
+    line-height: 95%;
+  }
 
 #stacked-bar-container, #retreat-rate-chart-container, #controls, #references {
     font-family: 'Roboto', Arial, sans-serif; /* Apply Roboto to specific sections */
@@ -52,7 +84,7 @@ h1, h2, h3, h4, h5, h6 {
     width: 80%;
     max-width: 800px;
     border: 1px solid #ccc;
-    background-color: white;
+    background-color: #FBFBF8;
 }
   
 svg {
@@ -62,24 +94,53 @@ svg {
 }
   
 #controls {
-    margin: 1em auto;
-    width: 80%;
+    width: 800px;
+    margin: 0 auto;
+    padding-bottom: 1em;
     max-width: 800px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    text-align: right;
 }
 
-#stacked-bar-container {
-    width: 400px; /* Set a fixed width for the stacked bar */
-    margin: 2em auto; /* Center the container horizontally and add vertical spacing */
-    text-align: center; /* Center the content inside the container */
+#total-area {
+    width: 800px;
+    margin: 0 auto;
+    padding-bottom: 0.25em;
+    max-width: 800px;
+    text-align: left;
+}
+
+#change-since-1850 {
+    width: 800px;
+    margin: 0 auto;
+    padding-bottom: 0.25em;
+    max-width: 800px;
+    text-align: left;
+}
+
+#change-per-year {
+    width: 800px;
+    margin: 0 auto;
+    padding-bottom: 0.25em;
+    max-width: 800px;
+    text-align: left;
 }
   
+#stacked-bar-container {
+    width: 800px; /* Fixed width for the container */
+    margin: 0 auto; /* Center the container horizontally */
+    padding-top: 1em;
+    max-width: 800px;
+    position: relative; /* Enable positioning for child elements */
+    text-align: left; /* Align the text to the left */
+    line-height: 150%;
+  }
+  
 #stacked-bar {
-    display: block; /* Ensure the SVG behaves like a block element */
-    margin: 0 auto; /* Center the SVG horizontally */
-}
+    display: block; /* Block-level element */
+    margin: 0; /* No auto-centering */
+    position: relative; /* Relative position for offset adjustment */
+    left: -400px; /* Offset the stacked bar 400px to the left */
+  }
 
 #retreat-rate-chart-container {
     width: 400px; /* Set a fixed width for the retreat rate chart */
@@ -107,33 +168,51 @@ svg {
     margin: 0 1em;
     width: 300px;
 }
-  
+
+
+/* References */
+
 #references {
-    width: 800px; /* Match the width of the main content */
-    margin: 2em auto; /* Center the section and add vertical spacing */
-    text-align: left; /* Align text to the left */
-    font-size: 14px; /* Match the font size of the rest of the site */
-}
+    max-width: 800px;
+    margin: 3em auto;
+    text-align: left;
+    font-size: 14px;
+    font-family: 'Roboto', Arial, sans-serif;
+  }
   
 #references h2 {
-    font-size: 18px; /* Slightly larger font for the heading */
-    margin-bottom: 0.5em; /* Add spacing below the heading */
-}
+    font-size: 18px;
+    margin-bottom: 1em;
+  }
   
-#references ul {
-    padding-left: 1.5em; /* Add padding for the list */
-    list-style-type: none;
-}
+  .reference-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1.5em;
+    margin-top: 1em;
+  }
   
-#references ul li {
-    margin-bottom: 0.5em; /* Add spacing between list items */
-}
+  .reference-item h4 {
+    margin: 0 0 0.5em;
+    font-size: 14px;
+    font-weight: 700;
+    color: #333;
+  }
   
-#references a {
-    color: #007BFF; /* Use a blue color for links */
-    text-decoration: none; /* Remove underline from links */
-}
+  .reference-item p,
+  .reference-item a {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.4;
+    color: #333;
+  }
   
-#references a:hover {
-    text-decoration: underline; /* Add underline on hover */
-}
+  .reference-item a {
+    color: #005ea5;
+    text-decoration: none;
+  }
+  
+  .reference-item a:hover {
+    text-decoration: underline;
+  }
+  
