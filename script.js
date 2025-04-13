@@ -328,32 +328,48 @@ function updateStackedBar(currentYearIndex, object = "stacked-bar-full", glacier
 
 
 
+
 function updateHorizontalBarChart(selectedYear, chartId = "glacier-bar-chart") {
+
   // Select the SVG element by id (ensure your SVG in the HTML has width and height attributes)
   const svg = d3.select("#" + chartId);
-  const margin = { top: 20, right: 20, bottom: 30, left: 80 };
+  const margin = { top: 20, right: 20, bottom: 30, left: 30 };
   const width = +svg.attr("width") - margin.left - margin.right;
-  const height = +svg.attr("height") - margin.top - margin.bottom;
-
-  // Clear previous chart contents
-  svg.selectAll("*").remove();
-
-  // Append a group element which will contain the chart
-  const g = svg.append("g")
-               .attr("transform", `translate(${margin.left},${margin.top})`);
-
+  
   // Find the data for the specified year
   const yearData = glacierAreas.find(d => d.year === selectedYear);
   if (!yearData) {
     console.error("No data found for year", selectedYear);
     return;
   }
-
+  
   // Convert the areas object into an array of objects with properties: glacierId and area.
-  const glacierEntries = Object.entries(yearData.areas).map(([glacierId, area]) => ({
-    glacierId,
-    area
-  }));
+  const glacierEntries = Object.entries(yearData.areas)
+    .map(([glacierId, area]) => ({
+      glacierId,
+      area
+    }))
+    .sort((a, b) => a.glacierId.localeCompare(b.glacierId));
+
+  // Calculate desired SVG height based on a consistent bar height
+  const barHeight = 20; // constant height for each bar
+  const numberOfBars = glacierEntries.length;
+  const totalHeight = numberOfBars * barHeight; // include margins
+
+  console.log("Number of bars:", numberOfBars);
+  console.log("Total height for the chart:", totalHeight);
+
+  // Update the SVG's height attribute
+  document.getElementById(chartId).style.height = totalHeight + "px";
+
+
+  // Clear previous chart contents and re-append group container
+  svg.selectAll("*").remove();
+  const g = svg.append("g")
+               .attr("transform", `translate(${margin.left},${margin.top})`);
+
+  // Recalculate the inner chart height after updating the SVG's total height.
+  const innerHeight = totalHeight - margin.top - margin.bottom;
 
   // Set up scales:
   // x scale: for the area values. Range from 0 to the maximum area among all glaciers.
@@ -362,9 +378,10 @@ function updateHorizontalBarChart(selectedYear, chartId = "glacier-bar-chart") {
               .range([0, width]);
 
   // y scale: for the glacier identifiers. Use a band scale for discrete identifiers.
+  // Here we use the recomputed innerHeight.
   const y = d3.scaleBand()
               .domain(glacierEntries.map(d => d.glacierId))
-              .range([0, height])
+              .range([0, innerHeight])
               .padding(0.1);
 
   // Draw the bars:
@@ -377,18 +394,14 @@ function updateHorizontalBarChart(selectedYear, chartId = "glacier-bar-chart") {
    .attr("y", d => y(d.glacierId))
    .attr("height", y.bandwidth())
    .attr("width", d => x(d.area))
-   .attr("fill", "#69b3a2");
+   .attr("fill", "#C8E9E9");
 
-  // Add y-axis with glacier IDs:
+  // Add y-axis with glacier IDs (hiding the axis path and ticks for a cleaner look)
   g.append("g")
    .attr("class", "y-axis")
-   .call(d3.axisLeft(y));
-
-  // (Optional) Add x-axis to show area scale:
-  g.append("g")
-   .attr("class", "x-axis")
-   .attr("transform", `translate(0,${height})`)
-   .call(d3.axisBottom(x).ticks(5));
+   .call(d3.axisLeft(y))
+   .selectAll("path, line")
+   .style("display", "none");
 
   // (Optional) Add labels for the area values at the end of each bar:
   g.selectAll(".label")
@@ -401,6 +414,7 @@ function updateHorizontalBarChart(selectedYear, chartId = "glacier-bar-chart") {
    .attr("dy", "0.35em")
    .text(d => d.area.toFixed(1));
 }
+
 
 
 
