@@ -536,7 +536,6 @@ let selectedStateIds = [];
 
 // Global variable to track selected glacier identifier (persistent ID)
 let selectedGlacierPersistentId = null;
-// Global variable to track the selected feature IDs from the map source
 
 // Function to clear current selection from the map
 function clearGlacierSelection() {
@@ -572,6 +571,8 @@ function updateGlacierSelection(selectedGlacierId) {
   });
   
   console.log("Updated selection on the map for glacier ID:", selectedGlacierId);
+
+  selectedGlacierPersistentId = selectedGlacierId; // Store the persistent glacier ID
 }
 
 
@@ -591,6 +592,8 @@ function updateVisualizations() {
   // Update other visualizations or data
   updateStackedBar(selectedYearIndex);
   updateStackedBar(selectedYearIndex, "stacked-bar-glacier", selectedGlacierPersistentId);
+
+  console.log("Persistent glacier ID:", selectedGlacierPersistentId); // Debugging log
 
   // Fetch and update the GeoJSON data
   fetch(glacierData[selectedYear])
@@ -634,9 +637,15 @@ function updateVisualizations() {
 
 
 
-// Existing slider code for fetching and updating data
 // Slider listener
-document.getElementById("yearSlider").addEventListener("input", () => {
+document.getElementById("yearSlider").addEventListener("input", (event) => {
+  const selectedYearIndex = parseInt(event.target.value, 10);
+  const selectedYear = years[selectedYearIndex]; // Assuming `years` is your array of year values
+
+  // Update the year label with the selected year
+  document.getElementById("yearLabel").textContent = selectedYear;
+
+  // Call your update function to refresh visualizations
   updateVisualizations();
 });
 
@@ -646,24 +655,10 @@ document.getElementById("sort-options").addEventListener("change", () => {
 });
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+d3.select("#idSelector").on("change", function() {
+  selectedGlacierPersistentId = d3.select(this).property("value");
+  updateGlacierSelection(selectedGlacierPersistentId);
+});
 
 
 
