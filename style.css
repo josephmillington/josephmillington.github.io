@@ -55,6 +55,12 @@ body {
     background-color: #0056b3;
 }
 
+#sort-options {
+    padding: 0.5em;
+    margin-top: 0.5em;
+    font-size: 14px;
+}
+
 h1, h2, h3, h4, h5, h6 {
     font-family: 'Roboto', Arial, sans-serif; /* Apply Roboto to headings */
     font-weight: 900; /* Use the bold weight for headings */

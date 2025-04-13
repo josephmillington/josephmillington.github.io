@@ -330,61 +330,51 @@ function updateStackedBar(currentYearIndex, object = "stacked-bar-full", glacier
 
 
 function updateHorizontalBarChart(selectedYear, chartId = "glacier-bar-chart") {
-
-  // Select the SVG element by id (ensure your SVG in the HTML has width and height attributes)
   const svg = d3.select("#" + chartId);
   const margin = { top: 20, right: 20, bottom: 30, left: 30 };
   const width = +svg.attr("width") - margin.left - margin.right;
-  
-  // Find the data for the specified year
+
   const yearData = glacierAreas.find(d => d.year === selectedYear);
   if (!yearData) {
     console.error("No data found for year", selectedYear);
     return;
   }
-  
-  // Convert the areas object into an array of objects with properties: glacierId and area.
-  const glacierEntries = Object.entries(yearData.areas)
-    .map(([glacierId, area]) => ({
-      glacierId,
-      area
-    }))
-    .sort((a, b) => a.glacierId.localeCompare(b.glacierId));
 
-  // Calculate desired SVG height based on a consistent bar height
-  const barHeight = 20; // constant height for each bar
+  // Get sorting option from dropdown
+  const sortOption = document.getElementById("sort-options").value;
+
+  // Convert and sort the data based on the selected sort option
+  let glacierEntries = Object.entries(yearData.areas).map(([glacierId, area]) => ({
+    glacierId,
+    area
+  }));
+
+  if (sortOption === "id") {
+    glacierEntries.sort((a, b) => a.glacierId.localeCompare(b.glacierId));
+  } else if (sortOption === "area") {
+    glacierEntries.sort((a, b) => b.area - a.area);
+  }
+
+  const barHeight = 20;
   const numberOfBars = glacierEntries.length;
-  const totalHeight = numberOfBars * barHeight; // include margins
+  const totalHeight = numberOfBars * barHeight;
 
-  console.log("Number of bars:", numberOfBars);
-  console.log("Total height for the chart:", totalHeight);
-
-  // Update the SVG's height attribute
   document.getElementById(chartId).style.height = totalHeight + "px";
 
-
-  // Clear previous chart contents and re-append group container
   svg.selectAll("*").remove();
-  const g = svg.append("g")
-               .attr("transform", `translate(${margin.left},${margin.top})`);
+  const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
 
-  // Recalculate the inner chart height after updating the SVG's total height.
   const innerHeight = totalHeight - margin.top - margin.bottom;
 
-  // Set up scales:
-  // x scale: for the area values. Range from 0 to the maximum area among all glaciers.
   const x = d3.scaleLinear()
               .domain([0, d3.max(glacierEntries, d => d.area)])
               .range([0, width]);
 
-  // y scale: for the glacier identifiers. Use a band scale for discrete identifiers.
-  // Here we use the recomputed innerHeight.
   const y = d3.scaleBand()
               .domain(glacierEntries.map(d => d.glacierId))
               .range([0, innerHeight])
               .padding(0.1);
 
-  // Draw the bars:
   g.selectAll(".bar")
    .data(glacierEntries)
    .enter()
@@ -396,14 +386,12 @@ function updateHorizontalBarChart(selectedYear, chartId = "glacier-bar-chart") {
    .attr("width", d => x(d.area))
    .attr("fill", "#C8E9E9");
 
-  // Add y-axis with glacier IDs (hiding the axis path and ticks for a cleaner look)
   g.append("g")
    .attr("class", "y-axis")
    .call(d3.axisLeft(y))
    .selectAll("path, line")
    .style("display", "none");
 
-  // (Optional) Add labels for the area values at the end of each bar:
   g.selectAll(".label")
    .data(glacierEntries)
    .enter()
@@ -412,9 +400,16 @@ function updateHorizontalBarChart(selectedYear, chartId = "glacier-bar-chart") {
    .attr("x", d => x(d.area) + 5)
    .attr("y", d => y(d.glacierId) + y.bandwidth() / 2)
    .attr("dy", "0.35em")
-   .text(d => d.area.toFixed(1));
+   .text(d => d.area.toFixed(1))
+   .style("fill", "#333")
+   .style("font-size", "10px");
 }
 
+// Add event listener for dropdown
+document.getElementById("sort-options").addEventListener("change", () => {
+  const selectedYear = 1850; // Replace with your desired year
+  updateHorizontalBarChart(selectedYear);
+});
 
 
 
@@ -581,65 +576,73 @@ function updateGlacierSelection(selectedGlacierId) {
 
 
 
-// Existing slider code for fetching and updating data
-document.getElementById('yearSlider').addEventListener('input', (event) => {
-  const selectedYearIndex = parseInt(event.target.value, 10);
+
+
+
+
+function updateVisualizations() {
+  const selectedYearIndex = parseInt(document.getElementById("yearSlider").value, 10);
   const selectedYear = years[selectedYearIndex];
+  const sortOption = document.getElementById("sort-options").value; // Get sort option from dropdown
 
-  // Assuming `currentYear` is defined or derived from your slider selection
-  updateHorizontalBarChart(selectedYear, "glacier-bar-chart");
+  // Update the horizontal bar chart with the current year and sorting option
+  updateHorizontalBarChart(selectedYear, "glacier-bar-chart", sortOption);
 
-  updateStackedBar(selectedYearIndex)
-  updateStackedBar(selectedYearIndex, "stacked-bar-glacier", selectedGlacierPersistentId)
+  // Update other visualizations or data
+  updateStackedBar(selectedYearIndex);
+  updateStackedBar(selectedYearIndex, "stacked-bar-glacier", selectedGlacierPersistentId);
 
-  // Fetch the new GeoJSON data for the selected year
+  // Fetch and update the GeoJSON data
   fetch(glacierData[selectedYear])
     .then((response) => response.json())
     .then((data) => {
-      // Instead of reassigning IDs from scratch, ensure each feature has a persistent glacier-id 
-      // For demonstration, assume each feature has a 'glacier-id' property already.
-      
-      // If you need to assign unique IDs for the map interaction, do that:
       data.features.forEach((feature, index) => {
-        // Only assign if not already present, or assign a new value if necessary
         if (!feature.id) {
           feature.id = index;
         }
       });
-      
-      // Update the GeoJSON source with the new data
-      const source = map.getSource('glaciers');
+
+      const source = map.getSource("glaciers");
       if (source) {
-        const features = map.querySourceFeatures('glaciers', { sourceLayer: 'glaciers-layer' });
-        features.forEach(feature => {
-          map.setFeatureState({ source: 'glaciers', id: feature.id }, { selected: false });
+        map.querySourceFeatures("glaciers", { sourceLayer: "glaciers-layer" }).forEach(feature => {
+          map.setFeatureState({ source: "glaciers", id: feature.id }, { selected: false });
         });
         source.setData(data);
       } else {
-        console.error('Glacier source not found.');
+        console.error("Glacier source not found.");
       }
-      
-      // Once the map is idle (meaning the new data has rendered), reapply the glacier selection
-      map.once('idle', () => {
-        // Reapply selection using the stored persistent ID, if there is one.
+
+      map.once("idle", () => {
         if (selectedGlacierPersistentId) {
           updateGlacierSelection(selectedGlacierPersistentId);
         }
       });
-      
-      // Calculate and display the total glacier area, etc.
+
       displayTotalGlacierArea(data);
     })
     .catch((error) => {
-      console.error('Error loading GeoJSON data:', error);
+      console.error("Error loading GeoJSON data:", error);
     });
+}
+
+
+
+
+
+
+
+
+
+
+// Existing slider code for fetching and updating data
+// Slider listener
+document.getElementById("yearSlider").addEventListener("input", () => {
+  updateVisualizations();
 });
 
-// When the user changes the glacier in your drop-down or elsewhere,
-// store the persistent glacier ID globally and update selection accordingly.
-d3.select("#idSelector").on("change", function() {
-  selectedGlacierPersistentId = d3.select(this).property("value");
-  updateGlacierSelection(selectedGlacierPersistentId);
+// Dropdown listener
+document.getElementById("sort-options").addEventListener("change", () => {
+  updateVisualizations();
 });
 
 

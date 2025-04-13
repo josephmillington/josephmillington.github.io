@@ -59,21 +59,24 @@
     (<span id="changePerYearPercent">0</span>%)
   </div>
 
+
+
   <!-- Display a stacked bar -->
   <div id="stacked-bar-container">
     <strong>National Glacier Retreat</strong>
     <svg id="stacked-bar-full" width="400" height="25"></svg>
     <strong>Selected Glacier Retreat</strong>
     <svg id="stacked-bar-glacier" width="400" height="25"></svg>
-    <strong>Glacier Areas</strong>
+    <strong>Glacier Areas<br/></strong>
+    <select id="sort-options">
+      <option value="id">Sort by ID</option>
+      <option value="area">Sort by Area</option>
+    </select>
     <svg id="glacier-bar-chart" width="400"></svg>
   </div>
 
 
-  <!-- Retreat rate bar chart -->
-  <div id="retreat-rate-chart-container">
-    <svg id="retreat-rate-chart" width="400" height="200"></svg>
-  </div>
+
 
   <!-- References Section -->
   <footer id="references">
@@ -103,6 +106,10 @@
     </div>
   </footer>
 
+  <!-- Retreat rate bar chart -->
+  <div id="retreat-rate-chart-container">
+    <svg id="retreat-rate-chart" width="400" height="200"></svg>
+  </div>
 
   <!-- Link to our script -->
   <script src="script.js"></script>
