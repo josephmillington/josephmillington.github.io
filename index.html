@@ -15,6 +15,9 @@
   <!-- Include MapLibre GL JS from a CDN -->
   <link href="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.css" rel="stylesheet">
   <script src="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js"></script>
+  <!-- Include jQuery from a CDN -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
 </head>
 <body>
   <header>
@@ -36,44 +39,50 @@
   <!-- Container for the map -->
   <div id="map-container" style="width: 800px; height: 600px;"></div>
 
-  <!-- Slider control for selecting the year -->
+  <!-- Slider control for selecting year -->
   <div id="controls">
-    <input type="range" id="yearSlider" min="0" max="4" step="1" value="0">
-    <span id="yearLabel">1850</span>
+    <input
+      type="range"
+      id="yearSlider"
+      name="yearSlider"
+      list="values"
+      min="0"
+      max="4"
+      step="1"
+      value="0"
+    />
+    <datalist id="values">
+      <option selected value="0" label="1850"></option>
+      <option value="1" label="1931"></option>
+      <option value="2" label="1973"></option>
+      <option value="3" label="2010"></option>
+      <option value="4" label="2016"></option>
+    </datalist>
   </div>
   
-  <!-- Display for the total area -->
-  <div id="total-area">
-    <strong>Total Glacier Area:</strong> <span id="areaValue">0</span> km²
-  </div>
-
-  <!-- Display for the change since 1850 -->
-  <div id="change-since-1850">
-    <strong>Total Change Since 1850:</strong> <span id="changeValue">0</span> km²
-  </div>
-
-  <!-- Display for the area change per year -->
-  <div id="change-per-year">
-    <strong>Annual Rate of Change Since 1850:</strong> 
-    <span id="changePerYearValue">0</span> km² 
-    (<span id="changePerYearPercent">0</span>%)
-  </div>
-
   <!-- Display a stacked bar -->
-  <div id="stacked-bar-container">
-    <strong>National Glacier Retreat</strong>
+  <div id="glacier-area-container">
+    <h2>Glacier Area</h2>
+    <p>Displayed area values are measured using square kilometres (km²) and calculated for the selected year from the annual data listed under references.</p>
+    <p>The below bar shows the full glacier extent for the selected year, and for years after 1850, the extent lost to retreat from the 1850 baseline.</p>
     <svg id="stacked-bar-full" width="400" height="25"></svg>
-    <strong>Selected Glacier Retreat</strong>
-    <svg id="stacked-bar-glacier" width="400" height="25"></svg>
-    <strong>Glacier Areas</strong>
-    <svg id="glacier-bar-chart" width="400" height="500"></svg>
+    <!--<h3>Glacier Areas</h3>-->
+    <p>Areas of each glacier (grouped by drainage basin) are shown below. These can be sorted by area or ID, with the selected glacier always shown top.</p>
+    <select id="sort-options">
+      <option value="id">Sort by ID</option>
+      <option selected value="area">Sort by Area</option>
+    </select>
+    <select id="glacier-limit">
+      <option value="10">Top 10</option>
+      <option selected value="20">Top 20</option>
+      <option value="50">Top 50</option>
+      <option value="all">All</option>
+    </select>
+    <svg id="glacier-bar-chart" width="400"></svg>
   </div>
 
 
-  <!-- Retreat rate bar chart -->
-  <div id="retreat-rate-chart-container">
-    <svg id="retreat-rate-chart" width="400" height="200"></svg>
-  </div>
+
 
   <!-- References Section -->
   <footer id="references">
@@ -100,11 +109,19 @@
         <h4>1850 Data</h4>
         <p>Maisch, M., Wipf, A., Denneler, B., Battaglia, J. & Benz, C. 2000, Die Gletscher der Schweizer Alpen: Gletscherhochstand 1850, Aktuelle Vergletscherung, Gletscherschwund-Szenarien. (Schlussbericht NFP 31). 2. Auflage. vdf Hochschulverlag an der ETH Zürich, 373 pp. & Paul, F. 2004, The new Swiss glacier inventory 2000 – application of remote sensing and GIS. PhD Thesis, Department of Geography, University of Zurich, Schriftenreihe Physische Geographie, 52, 210 pp.</p>
       </div>
+      <div class="reference-item">
+        <h4>Length Change Data</h4>
+        <p>GLAMOS (2024). Swiss Glacier Length Change, release 2024, Glacier Monitoring Switzerland, doi:10.18750/lengthchange.2024.r2024.</p>
     </div>
   </footer>
 
+  <!-- Retreat rate bar chart -->
+  <div id="retreat-rate-chart-container">
+    <svg id="retreat-rate-chart" width="400" height="200"></svg>
+  </div>
 
   <!-- Link to our script -->
   <script src="script.js"></script>
+
 </body>
 </html>

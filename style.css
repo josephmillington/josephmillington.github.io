@@ -55,6 +55,18 @@ body {
     background-color: #0056b3;
 }
 
+#sort-options {
+    padding: 0.5em;
+    margin-top: 0.5em;
+    font-size: 14px;
+}
+
+#glacier-limit {
+  padding: 0.5em;
+  margin-top: 0.5em;
+  font-size: 14px;
+}
+
 h1, h2, h3, h4, h5, h6 {
     font-family: 'Roboto', Arial, sans-serif; /* Apply Roboto to headings */
     font-weight: 900; /* Use the bold weight for headings */
@@ -75,64 +87,67 @@ h1, h2, h3, h4, h5, h6 {
     line-height: 95%;
   }
 
-#stacked-bar-container, #retreat-rate-chart-container, #controls, #references {
+#glacier-area-container, #retreat-rate-chart-container, #controls, #references {
     font-family: 'Roboto', Arial, sans-serif; /* Apply Roboto to specific sections */
 }
   
 #map-container {
-    margin: 2em auto;
-    width: 80%;
-    max-width: 800px;
-    border: 1px solid #ccc;
-    background-color: #FBFBF8;
+  margin: 2em auto;
+  width: 80%;
+  max-width: 800px;
+  border: 1px solid #333;
+  border-radius: 2px;
+  background-color: #FBFBF8;
 }
+
+/* Container for the slider controls */
+#controls {
+  width: 300px;
+  margin: 0 auto;
+  padding: 0.5em;
+  text-align: center;
+  transform: translate(250px, -1em); /* Combines translateX and translateY */
+}
+
+/* Style the input range - ensure it shares the same width as the datalist */
+input[type="range"] {
+  width: 300px;
+  margin: 0 auto;
+  display: block;
+}
+
+/* Custom styling for the datalist to distribute labels evenly */
+datalist {
+  display: flex;
+  justify-content: space-between;
+  width: 300px;  /* same width as the range input */
+  margin: 0 auto;
+  padding: 0;
+}
+
+/* Remove extra spacing from option elements */
+datalist option {
+  padding: 0;
+  /* Additional styling for your labels can be added here if desired */
+}
+
   
 svg {
     width: 100%;
     height: auto;
     fill:aqua;
 }
-  
-#controls {
-    width: 800px;
-    margin: 0 auto;
-    padding-bottom: 1em;
-    max-width: 800px;
-    text-align: right;
-}
 
-#total-area {
-    width: 800px;
-    margin: 0 auto;
-    padding-bottom: 0.25em;
-    max-width: 800px;
-    text-align: left;
-}
-
-#change-since-1850 {
-    width: 800px;
-    margin: 0 auto;
-    padding-bottom: 0.25em;
-    max-width: 800px;
-    text-align: left;
-}
-
-#change-per-year {
-    width: 800px;
-    margin: 0 auto;
-    padding-bottom: 0.25em;
-    max-width: 800px;
-    text-align: left;
-}
-  
-#stacked-bar-container {
-    width: 800px; /* Fixed width for the container */
+ 
+#glacier-area-container {
+    width: 400px; /* Fixed width for the container */
     margin: 0 auto; /* Center the container horizontally */
     padding-top: 1em;
     max-width: 800px;
     position: relative; /* Enable positioning for child elements */
     text-align: left; /* Align the text to the left */
     line-height: 150%;
+    transform: translate(-200px, -3em); /* Center the container by moving it left */
   }
   
 #stacked-bar {
@@ -164,10 +179,7 @@ svg {
     font-size: 14px; /* Match the font size of the rest of the site */
 }
   
-#yearSlider {
-    margin: 0 1em;
-    width: 300px;
-}
+
 
 
 /* References */
