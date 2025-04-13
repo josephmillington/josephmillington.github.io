@@ -329,7 +329,7 @@ function updateStackedBar(currentYearIndex, object = "stacked-bar-full", glacier
 
 
 
-function updateHorizontalBarChart(selectedYear, chartId = "glacier-bar-chart") {
+function updateHorizontalBarChart(selectedYear, selectedGlacierPersistentId, chartId = "glacier-bar-chart") {
   const svg = d3.select("#" + chartId);
   const margin = { top: 20, right: 20, bottom: 30, left: 30 };
   const width = +svg.attr("width") - margin.left - margin.right;
@@ -340,19 +340,27 @@ function updateHorizontalBarChart(selectedYear, chartId = "glacier-bar-chart") {
     return;
   }
 
-  // Get sorting option from dropdown
   const sortOption = document.getElementById("sort-options").value;
 
-  // Convert and sort the data based on the selected sort option
   let glacierEntries = Object.entries(yearData.areas).map(([glacierId, area]) => ({
     glacierId,
     area
   }));
 
+  // Find and separate the selected glacier
+  const selectedGlacier = glacierEntries.find(d => d.glacierId === selectedGlacierPersistentId);
+  glacierEntries = glacierEntries.filter(d => d.glacierId !== selectedGlacierPersistentId);
+
+  // Apply sorting only to the remaining entries
   if (sortOption === "id") {
     glacierEntries.sort((a, b) => a.glacierId.localeCompare(b.glacierId));
   } else if (sortOption === "area") {
     glacierEntries.sort((a, b) => b.area - a.area);
+  }
+
+  // Place the selected glacier at the top
+  if (selectedGlacier) {
+    glacierEntries.unshift(selectedGlacier);
   }
 
   const barHeight = 20;
@@ -384,13 +392,15 @@ function updateHorizontalBarChart(selectedYear, chartId = "glacier-bar-chart") {
    .attr("y", d => y(d.glacierId))
    .attr("height", y.bandwidth())
    .attr("width", d => x(d.area))
-   .attr("fill", "#C8E9E9");
+   .attr("fill", d => d.glacierId === selectedGlacierPersistentId ? "#FF5733" : "#C8E9E9");
 
   g.append("g")
    .attr("class", "y-axis")
    .call(d3.axisLeft(y))
-   .selectAll("path, line")
-   .style("display", "none");
+   .selectAll(".tick text")
+   .style("font-weight", d => d === selectedGlacierPersistentId ? "bold" : "normal")
+   .style("fill", d => d === selectedGlacierPersistentId ? "#FF5733" : "#000")
+   .style("font-size", "10px");
 
   g.selectAll(".label")
    .data(glacierEntries)
@@ -404,12 +414,6 @@ function updateHorizontalBarChart(selectedYear, chartId = "glacier-bar-chart") {
    .style("fill", "#333")
    .style("font-size", "10px");
 }
-
-// Add event listener for dropdown
-document.getElementById("sort-options").addEventListener("change", () => {
-  const selectedYear = 1850; // Replace with your desired year
-  updateHorizontalBarChart(selectedYear);
-});
 
 
 
@@ -512,11 +516,7 @@ function zoomToGlacier(glacierId) {
 
 
 
-populateGlacierAreas(() => {
 
-  // Update the stacked bar chart (which should now reference entry.totalArea when needed)
-  updateStackedBar(currentYearIndex);
-});
 
 
 
@@ -586,8 +586,11 @@ function updateVisualizations() {
   const selectedYear = years[selectedYearIndex];
   const sortOption = document.getElementById("sort-options").value; // Get sort option from dropdown
 
+  console.log("Selected year:", selectedYear); // Debugging log
+  console.log("Selected year index:", selectedYearIndex); // Debugging log
+
   // Update the horizontal bar chart with the current year and sorting option
-  updateHorizontalBarChart(selectedYear, "glacier-bar-chart", sortOption);
+  updateHorizontalBarChart(selectedYear, selectedGlacierPersistentId, "glacier-bar-chart", sortOption);
 
   // Update other visualizations or data
   updateStackedBar(selectedYearIndex);
@@ -637,28 +640,6 @@ function updateVisualizations() {
 
 
 
-// Slider listener
-document.getElementById("yearSlider").addEventListener("input", (event) => {
-  const selectedYearIndex = parseInt(event.target.value, 10);
-  const selectedYear = years[selectedYearIndex]; // Assuming `years` is your array of year values
-
-  // Update the year label with the selected year
-  document.getElementById("yearLabel").textContent = selectedYear;
-
-  // Call your update function to refresh visualizations
-  updateVisualizations();
-});
-
-// Dropdown listener
-document.getElementById("sort-options").addEventListener("change", () => {
-  updateVisualizations();
-});
-
-
-d3.select("#idSelector").on("change", function() {
-  selectedGlacierPersistentId = d3.select(this).property("value");
-  updateGlacierSelection(selectedGlacierPersistentId);
-});
 
 
 
@@ -673,6 +654,9 @@ document.getElementById('idSelector').addEventListener('change', (event) => {
 
   const glacierId = this.value;
   const dropdown = document.getElementById('idSelector');
+  const selectedYearIndex = parseInt(document.getElementById("yearSlider").value, 10);
+  const selectedYear = years[selectedYearIndex];
+
 
   // Grey out the dropdown and show the 'Return to All' button if a specific glacier is selected
   if (glacierId !== 'undefined') {
@@ -699,11 +683,6 @@ document.getElementById('idSelector').addEventListener('change', (event) => {
   // Set the new selected glacier's state
   selectedStateId = selectedGlacierId; // Track the currently selected feature ID
 
-
-  console.log("Selected glacier ID:", selectedStateId); // Debugging log
-  console.log("Glacier ID:", glacierId); // Debugging log
-
-
   if (selectedStateId == 'undefined') {
     console.log('Glacier ID (', selectedStateId, ') is missing.');
   }
@@ -727,6 +706,7 @@ document.getElementById('idSelector').addEventListener('change', (event) => {
 
   console.log("stacked-bar-glacier for year index", currentYearIndex, "and glacierID", selectedGlacierId); // Debugging log
   updateStackedBar(currentYearIndex, "stacked-bar-glacier", selectedGlacierId); // Update the stacked bar chart for the glacier group
+  updateHorizontalBarChart(selectedYear, selectedGlacierId, "glacier-bar-chart"); // Update the horizontal bar chart for the glacier group
   
 });
 
@@ -743,6 +723,8 @@ document.getElementById('returnToAll').addEventListener('click', function () {
   dropdown.value = 'All';
   dropdown.disabled = false; // Enable the dropdown again
   this.style.display = 'none'; // Hide the 'Return to All' button
+
+  updateVisualizations()
 
   // Reset the map view
   map.flyTo({
@@ -764,10 +746,58 @@ document.getElementById('returnToAll').addEventListener('click', function () {
     selectedStateIds = []; // Clear the tracking variable
   }
 
-  updateStackedBar(0, "stacked-bar-glacier", "All"); // Update the stacked bar chart for the glacier group
-
   console.log("Reset to 'All': Cleared highlighted glaciers, reset the map view, and enabled the dropdown.");
 });
+
+
+
+
+populateGlacierAreas(() => {
+  // Update the stacked bar chart (which should now reference entry.totalArea when needed)
+  updateVisualizations(currentYearIndex);
+});
+
+// Slider listener
+document.getElementById("yearSlider").addEventListener("input", () => {
+  updateVisualizations();
+});
+
+// Dropdown listener
+document.getElementById("sort-options").addEventListener("change", () => {
+  updateVisualizations();
+});
+
+
+d3.select("#idSelector").on("change", function() {
+  selectedGlacierPersistentId = d3.select(this).property("value");
+  updateGlacierSelection(selectedGlacierPersistentId);
+  updateVisualizations();
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -795,10 +825,6 @@ map.on('load', () => {
       });
   }
 });
-
-
-
-
 
 
 // Add click event listener for glaciers

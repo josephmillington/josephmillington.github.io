@@ -15,6 +15,9 @@
   <!-- Include MapLibre GL JS from a CDN -->
   <link href="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.css" rel="stylesheet">
   <script src="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js"></script>
+  <!-- Include jQuery from a CDN -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
 </head>
 <body>
   <header>
@@ -36,10 +39,25 @@
   <!-- Container for the map -->
   <div id="map-container" style="width: 800px; height: 600px;"></div>
 
-  <!-- Slider control for selecting the year -->
+  <!-- Slider control for selecting year -->
   <div id="controls">
-    <input type="range" id="yearSlider" min="0" max="4" step="1" value="0">
-    <span id="yearLabel">1850</span>
+    <input
+      type="range"
+      id="yearSlider"
+      name="yearSlider"
+      list="values"
+      min="0"
+      max="4"
+      step="1"
+      value="0"
+    />
+    <datalist id="values">
+      <option value="0" label="1850"></option>
+      <option value="1" label="1931"></option>
+      <option value="2" label="1973"></option>
+      <option value="3" label="2010"></option>
+      <option value="4" label="2016"></option>
+    </datalist>
   </div>
   
   <!-- Display for the total area -->
@@ -103,6 +121,9 @@
         <h4>1850 Data</h4>
         <p>Maisch, M., Wipf, A., Denneler, B., Battaglia, J. & Benz, C. 2000, Die Gletscher der Schweizer Alpen: Gletscherhochstand 1850, Aktuelle Vergletscherung, Gletscherschwund-Szenarien. (Schlussbericht NFP 31). 2. Auflage. vdf Hochschulverlag an der ETH Zürich, 373 pp. & Paul, F. 2004, The new Swiss glacier inventory 2000 – application of remote sensing and GIS. PhD Thesis, Department of Geography, University of Zurich, Schriftenreihe Physische Geographie, 52, 210 pp.</p>
       </div>
+      <div class="reference-item">
+        <h4>Length Change Data</h4>
+        <p>GLAMOS (2024). Swiss Glacier Length Change, release 2024, Glacier Monitoring Switzerland, doi:10.18750/lengthchange.2024.r2024.</p>
     </div>
   </footer>
 
@@ -113,5 +134,6 @@
 
   <!-- Link to our script -->
   <script src="script.js"></script>
+
 </body>
 </html>

@@ -86,25 +86,50 @@ h1, h2, h3, h4, h5, h6 {
 }
   
 #map-container {
-    margin: 2em auto;
-    width: 80%;
-    max-width: 800px;
-    border: 1px solid #ccc;
-    background-color: #FBFBF8;
+  margin: 2em auto;
+  width: 80%;
+  max-width: 800px;
+  border: 1px solid #333;
+  border-radius: 2px;
+  background-color: #FBFBF8;
 }
+
+/* Container for the slider controls */
+#controls {
+  width: 400px;
+  margin: 0 auto;
+  padding: 0.5em;
+  text-align: center;
+  transform: translate(200px, -1em); /* Combines translateX and translateY */
+}
+
+/* Style the input range - ensure it shares the same width as the datalist */
+input[type="range"] {
+  width: 400px;
+  margin: 0 auto;
+  display: block;
+}
+
+/* Custom styling for the datalist to distribute labels evenly */
+datalist {
+  display: flex;
+  justify-content: space-between;
+  width: 400px;  /* same width as the range input */
+  margin: 0 auto;
+  padding: 0;
+}
+
+/* Remove extra spacing from option elements */
+datalist option {
+  padding: 0;
+  /* Additional styling for your labels can be added here if desired */
+}
+
   
 svg {
     width: 100%;
     height: auto;
     fill:aqua;
-}
-  
-#controls {
-    width: 800px;
-    margin: 0 auto;
-    padding-bottom: 1em;
-    max-width: 800px;
-    text-align: right;
 }
 
 #total-area {
@@ -170,10 +195,7 @@ svg {
     font-size: 14px; /* Match the font size of the rest of the site */
 }
   
-#yearSlider {
-    margin: 0 1em;
-    width: 300px;
-}
+
 
 
 /* References */
