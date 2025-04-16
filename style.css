@@ -72,6 +72,11 @@ h1, h2, h3, h4, h5, h6 {
     font-weight: 900; /* Use the bold weight for headings */
 }
 
+h2 {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
 #header-inner {
     width: 800px;
     margin: 0 auto;
@@ -80,12 +85,14 @@ h1, h2, h3, h4, h5, h6 {
     text-align: left;
   }
   
-  header h1 {
+header h1 {
     margin: 0;
     font-size: 3em;
     font-weight: 900;
     line-height: 95%;
   }
+
+
 
 #glacier-area-container, #retreat-rate-chart-container, #controls, #references {
     font-family: 'Roboto', Arial, sans-serif; /* Apply Roboto to specific sections */
@@ -106,7 +113,7 @@ h1, h2, h3, h4, h5, h6 {
   margin: 0 auto;
   padding: 0.5em;
   text-align: center;
-  transform: translate(250px, -1em); /* Combines translateX and translateY */
+  transform: translate(250px, -1.25em); /* Combines translateX and translateY */
 }
 
 /* Style the input range - ensure it shares the same width as the datalist */
@@ -138,18 +145,60 @@ svg {
     fill:aqua;
 }
 
+
+
+
  
-#glacier-area-container {
-    width: 400px; /* Fixed width for the container */
-    margin: 0 auto; /* Center the container horizontally */
-    padding-top: 1em;
-    max-width: 800px;
-    position: relative; /* Enable positioning for child elements */
-    text-align: left; /* Align the text to the left */
-    line-height: 150%;
-    transform: translate(-200px, -3em); /* Center the container by moving it left */
-  }
-  
+#glacier-area-wrapper {
+  max-width: 800px;
+  margin: 0 auto; /* centers the wrapper */
+  padding-top: 0em;
+  transform: translateY(-2em); /* Adjusts the vertical position of the wrapper */
+}
+
+#glacier-area-title, #glacier-length-title {
+  text-align: left; /* Left align text */
+  margin-bottom: 0em;
+}
+
+
+#glacier-area-container, #glacier-length-container {
+  display: flex; /* Create a flex container for the columns */
+  justify-content: space-between; /* Align the text and chart side-by-side */
+  align-items: flex-start; /* Align items at the top */
+  width: 100%; /* Full width of the container */
+  max-width: 800px;
+  margin: 0 auto; /* Center horizontally */
+  padding-top: 0em;
+}
+
+#glacier-length-title::before, #glacier-area-title::before {
+  content: ""; /* Generate an empty element */
+  display: block;
+  width: 50%; /* Full-width line */
+  height: 1px; /* Thickness */
+  background-color: #333; /* Line color */
+  margin-top: 1em; /* Space above the line */
+}
+
+
+#glacier-text-content, #glacier-length-text-content {
+  width: 40%; /* Take up 60% of the container width */
+  text-align: left; /* Ensure text is left-aligned */
+  line-height: 150%;
+}
+
+#glacier-bar-chart-container {
+  width: 50%; /* Take up 35% of the container width */
+  text-align: left;
+}
+
+
+
+
+
+
+
 #stacked-bar {
     display: block; /* Block-level element */
     margin: 0; /* No auto-centering */
@@ -182,13 +231,15 @@ svg {
 
 
 
+
+
 /* References */
 
 #references {
     max-width: 800px;
     margin: 3em auto;
     text-align: left;
-    font-size: 14px;
+    font-size: 0.875em;
     font-family: 'Roboto', Arial, sans-serif;
   }
   
@@ -196,7 +247,17 @@ svg {
     font-size: 18px;
     margin-bottom: 1em;
   }
-  
+
+#references h2::before {
+    content: ""; /* Generate an empty element */
+    display: block;
+    width: 100%;
+    height: 1px;
+    background-color: #333;
+    margin-top: 1em;
+    margin-bottom: 1em;
+  }
+
   .reference-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -206,7 +267,7 @@ svg {
   
   .reference-item h4 {
     margin: 0 0 0.5em;
-    font-size: 14px;
+    font-size: 0.875em;
     font-weight: 700;
     color: #333;
   }
@@ -214,7 +275,7 @@ svg {
   .reference-item p,
   .reference-item a {
     margin: 0;
-    font-size: 13px;
+    font-size: 0.8em;
     line-height: 1.4;
     color: #333;
   }
