@@ -310,9 +310,18 @@ datalist option {
   #glacier-area-container,
   #glacier-length-container,
   #references {
-    width: 95%;
+    width: 100%;
     padding: 0 1em;
   }
+
+
+  /* Reduced map width for mobile devices */
+  #map-container {
+      width: 95%;
+      max-width: 600px; /* Adjust this value as needed for mobile */
+      margin: 2em auto;
+    }
+  
 
   /* Maintain left alignment for header on mobile */
   #header-inner {
