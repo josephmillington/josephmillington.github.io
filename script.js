@@ -246,19 +246,22 @@ let currentYearIndex = 0 // Default to the first year in the dataset
 
 function updateStackedBar(currentYearIndex, glacierId = null) {
   const svg = d3.select("#stacked-bar-full");
-  const width = +svg.attr("width");
-  const height = +svg.attr("height");
+  
+  // Get the computed dimensions from the SVG's bounding box
+  const bbox = svg.node().getBoundingClientRect();
+  const width = bbox.width;
+  const height = bbox.height;
 
   // Clear any existing bars
   svg.selectAll("*").remove();
   
   // Filter data
   const filtered1850 = glacierAreas
-    .filter(d => d.year === 1850) // Filter by year
+    .filter(d => d.year === 1850)
     .filter(d => d); // Remove null values
 
   const filteredCurrent = glacierAreas
-    .filter(d => d.year === glacierAreas[currentYearIndex].year) // Filter by year
+    .filter(d => d.year === glacierAreas[currentYearIndex].year)
     .filter(d => d); // Remove null values
 
   // Sum areas for the selected group or all glaciers
@@ -280,7 +283,7 @@ function updateStackedBar(currentYearIndex, glacierId = null) {
   // Define segments
   const segments = [
     { proportion: lostProportion, color: "#ffa196" },
-    { proportion: remainingProportion, color: "#C8E9E9", areaValue: currentArea.toFixed(1) + " km²"} // Store areaValue
+    { proportion: remainingProportion, color: "#C8E9E9", areaValue: currentArea.toFixed(1) + " km²" }
   ];
 
   // Draw the bar
@@ -301,14 +304,14 @@ function updateStackedBar(currentYearIndex, glacierId = null) {
 
   // Add areaValue text label at the left edge of the blue bar
   svg.selectAll(".area-label")
-    .data(segments.filter(d => d.color === "#C8E9E9")) // Only place label for the blue bar
+    .data(segments.filter(d => d.color === "#C8E9E9"))
     .enter()
     .append("text")
     .attr("class", "area-label")
-    .attr("x", width * lostProportion + 5) // Place at left edge of blue bar
-    .attr("y", height / 2) // Center vertically
+    .attr("x", width * lostProportion + 5)
+    .attr("y", height / 2)
     .attr("dy", "0.35em")
-    .text(d => d.areaValue) // Display the glacier area value
+    .text(d => d.areaValue)
     .style("fill", "#333")
     .style("font-size", "14px")
     .style("font-weight", "bold");
@@ -326,8 +329,12 @@ function updateStackedBar(currentYearIndex, glacierId = null) {
 function updateHorizontalBarChart(selectedYear, selectedGlacierPersistentId, chartId = "glacier-bar-chart") {
   const svg = d3.select("#" + chartId);
   const margin = { top: 20, right: 20, bottom: 30, left: 30 };
-  const width = +svg.attr("width") - margin.left - margin.right;
-
+  
+  // Retrieve the computed width from the SVG's bounding box
+  const bbox = svg.node().getBoundingClientRect();
+  const computedWidth = bbox.width;
+  const width = computedWidth - margin.left - margin.right;
+  
   // Retrieve the data for the selected year.
   const yearData = glacierAreas.find(d => d.year === selectedYear);
   if (!yearData) {
@@ -481,7 +488,6 @@ function updateHorizontalBarChart(selectedYear, selectedGlacierPersistentId, cha
    .style("fill", "#333")
    .style("font-size", "10px");
 }
-
 
 
 
