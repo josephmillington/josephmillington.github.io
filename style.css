@@ -302,6 +302,12 @@ datalist option {
 /* -------------------------------
    Responsive Design (Mobile)
 ------------------------------- */
+
+/* Prevent horizontal scrolling */
+html, body {
+  overflow-x: hidden;
+}
+
 @media screen and (max-width: 768px) {
 
   /* Use full width for mobile layout for the header and other containers */
