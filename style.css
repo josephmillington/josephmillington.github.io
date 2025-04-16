@@ -324,6 +324,15 @@ html, body {
     padding: 0 1em;
   }
 
+  h1, h2, h3, p {
+    margin-left: 0; /* Ensure equal left alignment */
+    padding-left: 0; /* Remove unwanted indentation */
+  }
+
+  h1, h2, h3, p {
+    padding-left: 1em; /* Consistent left padding */
+  }
+
 
   /* Reduced map width for mobile devices */
   #map-container {
