@@ -104,6 +104,7 @@ h2 {
   margin-bottom: 0;
 }
 
+/* Add dividing lines */
 #glacier-length-title::before,
 #glacier-area-title::before,
 #references h2::before {
@@ -324,6 +325,22 @@ html, body {
     padding: 0 1em;
   }
 
+  #glacier-length-title::before,
+  #glacier-area-title::before {
+    content: "";
+    display: block;
+    width: 50%; /* Control the width of the line */
+    height: 1px; /* Thickness of the line */
+    background-color: var(--border-color);
+    margin-inline-start: 16px;
+    margin-inline-end: 16px;
+  }
+
+  h1, h2:not(#reference-header), h3, h4, h5, h6 {
+    margin-inline-start: 16px;
+    margin-inline-end: 16px;
+  }
+
   /* Reduced map width for mobile devices */
   #map-container {
       width: 95%;
@@ -337,6 +354,8 @@ html, body {
     padding-top: 2em;
     padding-bottom: 1em;
     text-align: left;
+    margin-inline-start: 16px;
+    margin-inline-end: 16px;
   }
 
   header h1 {
@@ -375,4 +394,6 @@ html, body {
   #stacked-bar {
     left: 0;
   }
+
+
 }
