@@ -324,12 +324,12 @@ html, body {
     padding: 0 1em;
   }
 
-  h1, h2, h3, p {
+  h1, h2, h3, h4, p, body, svg, select {
     margin-left: 0; /* Ensure equal left alignment */
     padding-left: 0; /* Remove unwanted indentation */
   }
 
-  h1, h2, h3, p {
+  h1, h2, h3, h4, p, body, svg, select {
     padding-left: 1em; /* Consistent left padding */
   }
 
