@@ -37,7 +37,7 @@
   </div>
 
   <!-- Container for the map -->
-  <div id="map-container" style="width: 800px; height: 600px;"></div>
+  <div id="map-container" style="width: 1200px; height: 600px;"></div>
 
   <!-- Slider control for selecting year -->
   <div id="controls">
@@ -61,27 +61,46 @@
   </div>
   
   <!-- Display a stacked bar -->
-  <div id="glacier-area-container">
-    <h2>Glacier Area</h2>
-    <p>Displayed area values are measured using square kilometres (km²) and calculated for the selected year from the annual data listed under references.</p>
-    <p>The below bar shows the full glacier extent for the selected year, and for years after 1850, the extent lost to retreat from the 1850 baseline.</p>
-    <svg id="stacked-bar-full" width="400" height="25"></svg>
-    <!--<h3>Glacier Areas</h3>-->
-    <p>Areas of each glacier (grouped by drainage basin) are shown below. These can be sorted by area or ID, with the selected glacier always shown top.</p>
-    <select id="sort-options">
-      <option value="id">Sort by ID</option>
-      <option selected value="area">Sort by Area</option>
-    </select>
-    <select id="glacier-limit">
-      <option value="10">Top 10</option>
-      <option selected value="20">Top 20</option>
-      <option value="50">Top 50</option>
-      <option value="all">All</option>
-    </select>
-    <svg id="glacier-bar-chart" width="400"></svg>
+
+  <div id="glacier-area-wrapper">
+    <div id="glacier-area-title">
+      <h2>Glacier Area</h2>
+    </div>
+    <div id="glacier-area-container">
+      <div id="glacier-text-content">
+        <select id="sort-options">
+          <option value="id">Sort by ID</option>
+          <option selected value="area">Sort by Area</option>
+        </select>
+        <select id="glacier-limit">
+          <option value="10">Top 10</option>
+          <option selected value="20">Top 20</option>
+          <option value="50">Top 50</option>
+          <option value="all">All</option>
+        </select>
+        <p>Displayed area values are measured using square kilometres (km²) and calculated for the selected year from the annual data listed under references.</p>
+        <p>The below bar shows the full glacier extent for the selected year, and for years after 1850, the extent lost to retreat from the 1850 baseline.</p>
+        <svg id="stacked-bar-full" width="600" height="35"></svg>
+        <p>Areas of each glacier (grouped by drainage basin) are shown below. These can be sorted by area or ID, with the selected glacier always shown top.</p>
+      </div>
+      <div id="glacier-bar-chart-container">
+        <svg id="glacier-bar-chart" width="600"></svg>
+      </div>
+    </div>
+    <div id="glacier-length-title">
+      <h2>Glacier Length</h2>
+    </div>
+    <div id="glacier-length-container">
+      <div id="glacier-length-text-content">
+        <p>Displayed length values are measured using kilometres (km) and calculated for the selected year from the annual data listed under references.</p>
+        <p>The below bar shows the full glacier extent for the selected year, and for years after 1850, the extent lost to retreat from the 1850 baseline.</p>
+        <p>Lengths of each glacier (grouped by drainage basin) are shown right. These can be sorted by length or ID, with the selected glacier always shown top.</p>
+      </div>
+      <div id="glacier-length-bar-chart-container">
+        <svg id="glacier-length-bar-chart" width="600"></svg>
+      </div>
+    </div>
   </div>
-
-
 
 
   <!-- References Section -->
@@ -117,7 +136,7 @@
 
   <!-- Retreat rate bar chart -->
   <div id="retreat-rate-chart-container">
-    <svg id="retreat-rate-chart" width="400" height="200"></svg>
+    <svg id="retreat-rate-chart" width="600" height="200"></svg>
   </div>
 
   <!-- Link to our script -->
