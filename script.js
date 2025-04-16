@@ -328,6 +328,7 @@ function updateHorizontalBarChart(selectedYear, selectedGlacierPersistentId, cha
   const margin = { top: 20, right: 20, bottom: 30, left: 30 };
   const width = +svg.attr("width") - margin.left - margin.right;
 
+  // Retrieve the data for the selected year.
   const yearData = glacierAreas.find(d => d.year === selectedYear);
   if (!yearData) {
     console.error("No data found for year", selectedYear);
@@ -336,17 +337,17 @@ function updateHorizontalBarChart(selectedYear, selectedGlacierPersistentId, cha
 
   const sortOption = document.getElementById("sort-options").value;
   
-  // Convert the glacier area data into an array of objects
+  // Convert the glacier area data into an array of objects.
   let glacierEntries = Object.entries(yearData.areas).map(([glacierId, area]) => ({
     glacierId,
     area
   }));
 
-  // Find and separate the selected glacier
+  // Find and separate the selected glacier.
   const selectedGlacier = glacierEntries.find(d => d.glacierId === selectedGlacierPersistentId);
   glacierEntries = glacierEntries.filter(d => d.glacierId !== selectedGlacierPersistentId);
 
-  // Apply sorting to the remaining entries
+  // Apply sorting to the remaining entries.
   if (sortOption === "id") {
     glacierEntries.sort((a, b) => a.glacierId.localeCompare(b.glacierId));
   } else if (sortOption === "area") {
@@ -364,9 +365,7 @@ function updateHorizontalBarChart(selectedYear, selectedGlacierPersistentId, cha
 
   // If there is a selected glacier, reserve the top slot for it.
   if (selectedGlacier) {
-    // Limit the remaining entries to (limit - 1) items.
     glacierEntries = glacierEntries.slice(0, Math.max(0, limit - 1));
-    // Place the selected glacier at the top.
     glacierEntries.unshift(selectedGlacier);
   } else {
     glacierEntries = glacierEntries.slice(0, limit);
@@ -377,55 +376,112 @@ function updateHorizontalBarChart(selectedYear, selectedGlacierPersistentId, cha
   const totalHeight = numberOfBars * barHeight;
   document.getElementById(chartId).style.height = totalHeight + "px";
 
-  // Clear existing svg elements
+  // Clear existing svg elements.
   svg.selectAll("*").remove();
-  const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+  const g = svg.append("g")
+               .attr("transform", `translate(${margin.left},${margin.top})`);
 
   const innerHeight = totalHeight - margin.top - margin.bottom;
 
+  // Always use the baseline (1850) data to set up a fixed X-axis.
+  const baselineData = glacierAreas.find(d => d.year === 1850);
+  if (!baselineData) {
+    console.error("No baseline data found for year 1850");
+    return;
+  }
+  // Calculate global maximum baseline area from all glaciers.
+  const globalMax = d3.max(Object.values(baselineData.areas));
+
+  // Define an X scale that remains constant across years.
   const x = d3.scaleLinear()
-              .domain([0, d3.max(glacierEntries, d => d.area)])
+              .domain([0, globalMax])
               .range([0, width * 0.9]); // Limit bar width to 90% of the chart width
 
+  // Create a band scale for glacier IDs.
   const y = d3.scaleBand()
               .domain(glacierEntries.map(d => d.glacierId))
               .range([0, innerHeight])
               .padding(0.1);
 
-  // Append the bars
-  g.selectAll(".bar")
-   .data(glacierEntries)
-   .enter()
-   .append("rect")
-   .attr("class", "bar")
-   .attr("x", 0)
-   .attr("y", d => y(d.glacierId))
-   .attr("height", y.bandwidth())
-   .attr("width", d => x(d.area))
-   .attr("fill", d => d.glacierId === selectedGlacierPersistentId ? "#FF5733" : "#C8E9E9");
+  // For the baseline year, draw simple blue bars.
+  if (selectedYear === "1850") {
+    g.selectAll(".bar")
+     .data(glacierEntries)
+     .enter()
+     .append("rect")
+     .attr("class", "bar")
+     .attr("x", 0)
+     .attr("y", d => y(d.glacierId))
+     .attr("height", y.bandwidth())
+     .attr("width", d => x(d.area)) 
+     .attr("fill", d => d.glacierId === selectedGlacierPersistentId ? "#0056b3" : "#C8E9E9");
+  } else {
+    // For non-baseline years, draw the retreat (red) segment first on the left,
+    // then the current glacier area (blue) to its right.
+    g.selectAll(".retreat")
+     .data(glacierEntries)
+     .enter()
+     .append("rect")
+     .attr("class", "retreat")
+     .attr("x", 0)
+     .attr("y", d => y(d.glacierId))
+     .attr("height", y.bandwidth())
+     .attr("width", d => {
+       const baselineVal = baselineData.areas[d.glacierId];
+       const diff = baselineVal - d.area;
+       return diff > 0 ? x(diff) : 0;
+     })
+     .attr("fill", "#ffa196");
 
-  // Add the y-axis labels
+    g.selectAll(".bar")
+     .data(glacierEntries)
+     .enter()
+     .append("rect")
+     .attr("class", "bar")
+     // Position the blue bar immediately to the right of the red bar.
+     .attr("x", d => {
+       const baselineVal = baselineData.areas[d.glacierId];
+       const diff = baselineVal - d.area;
+       return diff > 0 ? x(diff) : 0;
+     })
+     .attr("y", d => y(d.glacierId))
+     .attr("height", y.bandwidth())
+     .attr("width", d => x(d.area))
+     .attr("fill", d => d.glacierId === selectedGlacierPersistentId ? "#0056b3" : "#C8E9E9");
+  }
+
+  // Add the y-axis labels.
   g.append("g")
    .attr("class", "y-axis")
    .call(d3.axisLeft(y))
    .selectAll(".tick text")
    .style("font-weight", d => d === selectedGlacierPersistentId ? "bold" : "normal")
-   .style("fill", d => d === selectedGlacierPersistentId ? "#FF5733" : "#000")
+   .style("fill", d => d === selectedGlacierPersistentId ? "#0056b3" : "#000")
    .style("font-size", "10px");
 
-  // Add area labels to the bars
+  // Add area labels.
   g.selectAll(".label")
    .data(glacierEntries)
    .enter()
    .append("text")
    .attr("class", "label")
-   .attr("x", d => x(d.area) + 5)
+   .attr("x", d => {
+     let offset = 0;
+     if (selectedYear !== "1850") {
+       // Offset the label by the width of the red retreat bar.
+       const baselineVal = baselineData.areas[d.glacierId];
+       const diff = baselineVal - d.area;
+       offset = diff > 0 ? x(diff) : 0;
+     }
+     return offset + x(d.area) + 5;
+   })
    .attr("y", d => y(d.glacierId) + y.bandwidth() / 2)
    .attr("dy", "0.35em")
    .text(d => d.area.toFixed(1))
    .style("fill", "#333")
    .style("font-size", "10px");
 }
+
 
 
 
