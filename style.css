@@ -45,11 +45,12 @@ body {
    Containers & Global Widths
 ------------------------------- */
 /* This container is used for elements like the map */
-.map-container {
-  width: 80%;
-  max-width: 1200px;
-  margin: 0 auto;
-  text-align: left;
+#map-container {
+  /* these will now apply as expected */
+  width: 95%;
+  max-width: 75em;    /* ≈1200px if 1em = 16px */
+  margin: 2em auto;    /* ≈600px */
+  aspect-ratio: 2 / 1; 
 }
 
 /* -------------------------------
