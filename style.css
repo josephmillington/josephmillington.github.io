@@ -324,19 +324,6 @@ html, body {
     padding: 0 1em;
   }
 
-  h1, h2, h3, h4, p, body, svg, select {
-    margin-left: 0; /* Ensure equal left alignment */
-    padding-left: 0; /* Remove unwanted indentation */
-    margin-right: 0; /* Ensure equal right alignment */
-    padding-right: 0; /* Remove unwanted indentation */
-  }
-
-  h1, h2, h3, h4, p, body, svg, select {
-    padding-left: 1em; /* Consistent left padding */
-    padding-right: 1em;
-  }
-
-
   /* Reduced map width for mobile devices */
   #map-container {
       width: 95%;
