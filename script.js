@@ -140,7 +140,7 @@ const map = new maplibregl.Map({
     ]
   },
   center: [8.6, 46.5], // Adjust to your map's center
-  zoom: 7
+  zoom: 7.5
 });
 
 
@@ -538,7 +538,7 @@ function zoomToGlacier(glacierId) {
     // Reset to the full extent of the default year's data
     map.flyTo({
       center: [8.6, 46.5], // Longitude, latitude
-      zoom: 7, // Zoom level
+      zoom:  7.5, // Zoom level
       speed: 1.5, // Optional, controls animation speed
       curve: 1, // Optional, controls animation curve
       essential: true // This makes the transition work even for users with reduced motion settings
@@ -799,7 +799,7 @@ document.getElementById('returnToAll').addEventListener('click', function () {
   // Reset the map view
   map.flyTo({
     center: [8.6, 46.5], // Longitude, latitude
-    zoom: 7, // Zoom level
+    zoom: 7.5, // Zoom level
     speed: 1.2,
     curve: 1,
     essential: true

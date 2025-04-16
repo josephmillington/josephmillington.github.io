@@ -24,7 +24,7 @@ body {
   }
 
 #id-selector-container {
-    width: 800px;
+    width: 1200px;
     margin: 0 auto;
     text-align: left;
 }
@@ -78,7 +78,7 @@ h2 {
 }
 
 #header-inner {
-    width: 800px;
+    width: 1200px;
     margin: 0 auto;
     padding-top: 4em;
     padding-bottom: 1em;
@@ -101,7 +101,7 @@ header h1 {
 #map-container {
   margin: 2em auto;
   width: 80%;
-  max-width: 800px;
+  max-width: 1200px;
   border: 1px solid #333;
   border-radius: 2px;
   background-color: #FBFBF8;
@@ -113,7 +113,7 @@ header h1 {
   margin: 0 auto;
   padding: 0.5em;
   text-align: center;
-  transform: translate(250px, -1.25em); /* Combines translateX and translateY */
+  transform: translate(450px, -1.25em); /* Combines translateX and translateY */
 }
 
 /* Style the input range - ensure it shares the same width as the datalist */
@@ -150,7 +150,7 @@ svg {
 
  
 #glacier-area-wrapper {
-  max-width: 800px;
+  max-width: 1200px;
   margin: 0 auto; /* centers the wrapper */
   padding-top: 0em;
   transform: translateY(-2em); /* Adjusts the vertical position of the wrapper */
@@ -167,7 +167,7 @@ svg {
   justify-content: space-between; /* Align the text and chart side-by-side */
   align-items: flex-start; /* Align items at the top */
   width: 100%; /* Full width of the container */
-  max-width: 800px;
+  max-width: 1200px;
   margin: 0 auto; /* Center horizontally */
   padding-top: 0em;
 }
@@ -183,7 +183,7 @@ svg {
 
 
 #glacier-text-content, #glacier-length-text-content {
-  width: 40%; /* Take up 60% of the container width */
+  width: 35%; /* Take up 60% of the container width */
   text-align: left; /* Ensure text is left-aligned */
   line-height: 150%;
 }
@@ -203,11 +203,11 @@ svg {
     display: block; /* Block-level element */
     margin: 0; /* No auto-centering */
     position: relative; /* Relative position for offset adjustment */
-    left: -400px; /* Offset the stacked bar 400px to the left */
+    left: -600px; /* Offset the stacked bar 400px to the left */
   }
 
 #retreat-rate-chart-container {
-    width: 400px; /* Set a fixed width for the retreat rate chart */
+    width: 600px; /* Set a fixed width for the retreat rate chart */
     margin: 2em auto; /* Center the container horizontally and add vertical spacing */
     text-align: center; /* Center the content inside the container */
 }
@@ -220,7 +220,7 @@ svg {
 /* Ensure the SVG element fills the container */
 #rate-of-change-chart {
     width: 100%; /* Make the chart fill the container */
-    height: 400px; /* Set a fixed height */
+    height: 600px; /* Set a fixed height */
   }
 
 /* Ensure consistent font size for the chart */
@@ -236,7 +236,7 @@ svg {
 /* References */
 
 #references {
-    max-width: 800px;
+    max-width: 1200px;
     margin: 3em auto;
     text-align: left;
     font-size: 0.875em;
