@@ -1,291 +1,360 @@
-
-
+/* -------------------------------
+   Font Declarations
+------------------------------- */
 @font-face {
   font-family: 'Roboto';
   src: url('font/Roboto-Regular.ttf') format('truetype');
-  font-weight: 400; /* Regular weight */
-  font-style: normal; /* Normal style */
+  font-weight: 400;
+  font-style: normal;
 }
 
 @font-face {
   font-family: 'Roboto';
   src: url('font/Roboto-Bold.ttf') format('truetype');
-  font-weight: 700; /* Bold weight */
-  font-style: normal; /* Normal style */
+  font-weight: 700;
+  font-style: normal;
 }
 
-/* Basic styling */
+/* -------------------------------
+   Base Styles & Variables
+------------------------------- */
+:root {
+  --primary-font: 'Roboto', Arial, sans-serif;
+  --background-color: #FBFBF8;
+  --primary-color: #007BFF;
+  --primary-color-hover: #0056b3;
+  --border-color: #333;
+  --font-size-base: 14px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 body {
-    font-family: 'Roboto', Arial, sans-serif; /* Use Roboto as the primary font */
-    text-align: center;
-    margin: 0;
-    padding: 0;
-    background-color: #FBFBF8; /* Light background color */
-  }
-
-#id-selector-container {
-    width: 1200px;
-    margin: 0 auto;
-    text-align: left;
-}
-  
-#idSelector {
-    padding: 0.5em;
-    font-size: 14px;
+  font-family: var(--primary-font);
+  text-align: center;
+  margin: 0;
+  padding: 0;
+  background-color: var(--background-color);
 }
 
-#idSelector:disabled {
-    background-color: #f0f0f0;
-    color: #aaa;
-    border: 1px solid #ccc;
-    cursor: not-allowed;
-}
-  
-#returnToAll {
-    margin-left: 1em;
-    padding: 0.5em 1em;
-    background-color: #007BFF;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-}
-  
-#returnToAll:hover {
-    background-color: #0056b3;
+/* -------------------------------
+   Containers & Global Widths
+------------------------------- */
+/* This container is used for elements like the map */
+.map-container {
+  width: 80%;
+  max-width: 1200px;
+  margin: 0 auto;
+  text-align: left;
 }
 
-#sort-options {
-    padding: 0.5em;
-    margin-top: 0.5em;
-    font-size: 14px;
+/* -------------------------------
+   Header Styling (Aligned with Map)
+------------------------------- */
+#header-inner {
+  /* Use the same width as the map container */
+  width: 80%;
+  max-width: 1200px;
+  margin: 4em auto 1em auto;
+  text-align: left;
 }
 
-#glacier-limit {
-  padding: 0.5em;
-  margin-top: 0.5em;
-  font-size: 14px;
+header h1 {
+  margin: 0;
+  font-size: 3em;
+  line-height: 95%;
+  text-align: left;
 }
 
+/* -------------------------------
+   Other Content Containers
+------------------------------- */
+#id-selector-container,
+#glacier-area-wrapper,
+#glacier-area-container,
+#glacier-length-container,
+#references {
+  /* Re-use the ".map-container" class styles if applicable */
+  /* Alternatively, customize each if they have different width requirements */
+  width: 80%;
+  max-width: 1200px;
+  margin: 0 auto;
+  text-align: left;
+}
+
+/* -------------------------------
+   Typography
+------------------------------- */
 h1, h2, h3, h4, h5, h6 {
-    font-family: 'Roboto', Arial, sans-serif; /* Apply Roboto to headings */
-    font-weight: 900; /* Use the bold weight for headings */
+  font-family: var(--primary-font);
+  font-weight: 900;
 }
 
 h2 {
+  margin: 0.5em 0;
+}
+
+#glacier-area-title,
+#glacier-length-title {
+  text-align: left;
+  margin-bottom: 0;
+}
+
+#glacier-length-title::before,
+#glacier-area-title::before,
+#references h2::before {
+  content: "";
+  display: block;
+  width: 50%;
+  height: 1px;
+  background-color: var(--border-color);
+  margin: 1em 0;
+}
+
+/* -------------------------------
+   Form Elements & Buttons
+------------------------------- */
+#idSelector {
+  padding: 0.5em;
+  font-size: var(--font-size-base);
+}
+
+#idSelector:disabled {
+  background-color: #f0f0f0;
+  color: #aaa;
+  border: 1px solid #ccc;
+  cursor: not-allowed;
+}
+
+#returnToAll {
+  margin-left: 1em;
+  padding: 0.5em 1em;
+  background-color: var(--primary-color);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+#returnToAll:hover {
+  background-color: var(--primary-color-hover);
+}
+
+#sort-options,
+#glacier-limit {
+  padding: 0.5em;
   margin-top: 0.5em;
-  margin-bottom: 0.5em;
+  font-size: var(--font-size-base);
 }
 
-#header-inner {
-    width: 1200px;
-    margin: 0 auto;
-    padding-top: 4em;
-    padding-bottom: 1em;
-    text-align: left;
-  }
-  
-header h1 {
-    margin: 0;
-    font-size: 3em;
-    font-weight: 900;
-    line-height: 95%;
-  }
-
-
-
-#glacier-area-container, #retreat-rate-chart-container, #controls, #references {
-    font-family: 'Roboto', Arial, sans-serif; /* Apply Roboto to specific sections */
-}
-  
+/* -------------------------------
+   Map and SVG Elements
+------------------------------- */
 #map-container {
+  /* Now using the map-container settings */
   margin: 2em auto;
   width: 80%;
   max-width: 1200px;
-  border: 1px solid #333;
+  border: 1px solid var(--border-color);
   border-radius: 2px;
-  background-color: #FBFBF8;
+  background-color: var(--background-color);
 }
 
-/* Container for the slider controls */
+svg {
+  width: 100%;
+  height: auto;
+  fill: aqua;
+}
+
+/* -------------------------------
+   Controls & Range Input
+------------------------------- */
 #controls {
   width: 300px;
   margin: 0 auto;
   padding: 0.5em;
   text-align: center;
-  transform: translate(450px, -1.25em); /* Combines translateX and translateY */
+  transform: translateX(450px) translateY(-1.25em);
 }
 
-/* Style the input range - ensure it shares the same width as the datalist */
 input[type="range"] {
-  width: 300px;
-  margin: 0 auto;
+  width: 100%;
   display: block;
+  margin: 0 auto;
 }
 
-/* Custom styling for the datalist to distribute labels evenly */
 datalist {
   display: flex;
   justify-content: space-between;
-  width: 300px;  /* same width as the range input */
+  width: 100%;
   margin: 0 auto;
   padding: 0;
 }
 
-/* Remove extra spacing from option elements */
 datalist option {
   padding: 0;
-  /* Additional styling for your labels can be added here if desired */
 }
 
-  
-svg {
-    width: 100%;
-    height: auto;
-    fill:aqua;
-}
-
-
-
-
- 
-#glacier-area-wrapper {
+/* -------------------------------
+   Glacier Area & Chart Layouts
+------------------------------- */
+#glacier-area-container,
+#glacier-length-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  width: 100%;
   max-width: 1200px;
-  margin: 0 auto; /* centers the wrapper */
-  padding-top: 0em;
-  transform: translateY(-2em); /* Adjusts the vertical position of the wrapper */
+  margin: 0 auto;
+  padding-top: 0;
 }
 
-#glacier-area-title, #glacier-length-title {
-  text-align: left; /* Left align text */
-  margin-bottom: 0em;
-}
-
-
-#glacier-area-container, #glacier-length-container {
-  display: flex; /* Create a flex container for the columns */
-  justify-content: space-between; /* Align the text and chart side-by-side */
-  align-items: flex-start; /* Align items at the top */
-  width: 100%; /* Full width of the container */
-  max-width: 1200px;
-  margin: 0 auto; /* Center horizontally */
-  padding-top: 0em;
-}
-
-#glacier-length-title::before, #glacier-area-title::before {
-  content: ""; /* Generate an empty element */
-  display: block;
-  width: 50%; /* Full-width line */
-  height: 1px; /* Thickness */
-  background-color: #333; /* Line color */
-  margin-top: 1em; /* Space above the line */
-}
-
-
-#glacier-text-content, #glacier-length-text-content {
-  width: 35%; /* Take up 60% of the container width */
-  text-align: left; /* Ensure text is left-aligned */
+#glacier-text-content,
+#glacier-length-text-content {
+  width: 35%;
+  text-align: left;
   line-height: 150%;
 }
 
 #glacier-bar-chart-container {
-  width: 50%; /* Take up 35% of the container width */
+  width: 50%;
   text-align: left;
 }
 
-
-
-
-
-
-
 #stacked-bar {
-    display: block; /* Block-level element */
-    margin: 0; /* No auto-centering */
-    position: relative; /* Relative position for offset adjustment */
-    left: -600px; /* Offset the stacked bar 400px to the left */
-  }
+  display: block;
+  margin: 0;
+  position: relative;
+  left: -600px;
+}
 
 #retreat-rate-chart-container {
-    width: 600px; /* Set a fixed width for the retreat rate chart */
-    margin: 2em auto; /* Center the container horizontally and add vertical spacing */
-    text-align: center; /* Center the content inside the container */
+  width: 600px;
+  margin: 2em auto;
+  text-align: center;
 }
-  
+
 #retreat-rate-chart {
-    display: block; /* Ensure the SVG behaves like a block element */
-    margin: 0 auto; /* Center the SVG horizontally */
+  display: block;
+  margin: 0 auto;
 }
 
-/* Ensure the SVG element fills the container */
 #rate-of-change-chart {
-    width: 100%; /* Make the chart fill the container */
-    height: 600px; /* Set a fixed height */
-  }
-
-/* Ensure consistent font size for the chart */
-#rate-of-change-chart-container text {
-    font-size: 14px; /* Match the font size of the rest of the site */
+  width: 100%;
+  height: 600px;
 }
-  
 
+#rate-of-change-chart-container text {
+  font-size: var(--font-size-base);
+}
 
-
-
-
-/* References */
-
+/* -------------------------------
+   References Section
+------------------------------- */
 #references {
-    max-width: 1200px;
-    margin: 3em auto;
-    text-align: left;
-    font-size: 0.875em;
-    font-family: 'Roboto', Arial, sans-serif;
-  }
-  
+  width: 80%;
+  max-width: 1200px;
+  margin: 3em auto;
+  text-align: left;
+  font-size: 0.875em;
+}
+
 #references h2 {
-    font-size: 18px;
-    margin-bottom: 1em;
+  font-size: 18px;
+  margin-bottom: 1em;
+}
+
+.reference-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1.5em;
+  margin-top: 1em;
+}
+
+.reference-item h4 {
+  margin: 0 0 0.5em;
+  font-size: 0.875em;
+  font-weight: 700;
+  color: var(--border-color);
+}
+
+.reference-item p,
+.reference-item a {
+  margin: 0;
+  font-size: 0.8em;
+  line-height: 1.4;
+  color: var(--border-color);
+}
+
+.reference-item a {
+  color: #005ea5;
+  text-decoration: none;
+}
+
+.reference-item a:hover {
+  text-decoration: underline;
+}
+
+/* -------------------------------
+   Responsive Design (Mobile)
+------------------------------- */
+@media screen and (max-width: 768px) {
+
+  /* Use full width for mobile layout for the header and other containers */
+  #header-inner,
+  #map-container,
+  #glacier-area-container,
+  #glacier-length-container,
+  #references {
+    width: 95%;
+    padding: 0 1em;
   }
 
-#references h2::before {
-    content: ""; /* Generate an empty element */
-    display: block;
+  /* Maintain left alignment for header on mobile */
+  #header-inner {
+    padding-top: 2em;
+    padding-bottom: 1em;
+    text-align: left;
+  }
+
+  header h1 {
+    font-size: 2.5em;
+    text-align: left;
+  }
+
+  /* Adjust fixed widths into flexible sizing */
+  #controls,
+  input[type="range"],
+  datalist {
     width: 100%;
-    height: 1px;
-    background-color: #333;
-    margin-top: 1em;
-    margin-bottom: 1em;
+    max-width: 300px;
+    transform: none;
   }
 
-  .reference-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 1.5em;
-    margin-top: 1em;
+  #retreat-rate-chart-container {
+    width: 100%;
+    max-width: 600px;
   }
-  
-  .reference-item h4 {
-    margin: 0 0 0.5em;
-    font-size: 0.875em;
-    font-weight: 700;
-    color: #333;
+
+  /* Flex containers will wrap */
+  #glacier-area-container,
+  #glacier-length-container {
+    flex-direction: column;
+    gap: 1em;
   }
-  
-  .reference-item p,
-  .reference-item a {
-    margin: 0;
-    font-size: 0.8em;
-    line-height: 1.4;
-    color: #333;
+
+  #glacier-text-content,
+  #glacier-length-text-content,
+  #glacier-bar-chart-container {
+    width: 100%;
   }
-  
-  .reference-item a {
-    color: #005ea5;
-    text-decoration: none;
+
+  /* Adjust stacked-bar position */
+  #stacked-bar {
+    left: 0;
   }
-  
-  .reference-item a:hover {
-    text-decoration: underline;
-  }
-  
+}
